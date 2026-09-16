@@ -1,0 +1,14 @@
+[Unit]
+Description=Opa-Checkin Button Sender
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/home/pi/opa-checkin/pi/venv/bin/python3 /home/pi/opa-checkin/pi/press_sender.py
+WorkingDirectory=/home/pi/opa-checkin/pi
+Restart=always
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target
