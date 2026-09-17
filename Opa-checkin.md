@@ -13,7 +13,7 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 - **Benachrichtigung Phase 2 (später):** zusätzlich WhatsApp
 - **Dashboard:** Familie kann jederzeit den aktuellen Status des Tages sehen (nicht nur im Alarmfall)
 - **Empfängerliste Phase 1:** feste Kontaktliste, alle bekommen die Nachricht
-- **Empfängerliste Phase 2 (später):** Prioritäts-/Eskalationsliste mit "Abwesend"-Schalter
+- **Empfängerliste Phase 2 (direkt umsetzen):** Prioritäts-/Eskalationsliste mit "Abwesend"-Schalter
 
 ## 3. Hardware
 - **Raspberry Pi 3** – aktuell bei euch, original verpackt/unbenutzt. Muss noch eingerichtet und zu Opa gebracht werden.
@@ -40,18 +40,18 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 **Noch offen vor dem Umzug zu Opa:** WLAN-Zugangsdaten im Pi auf Opas Netzwerk umstellen (machen wir kurz bevor der Pi umzieht).
 
 ### Phase 1 – MVP
-- [ ] Supabase-Projekt aufsetzen (Tabellen: presses, contacts)
-- [ ] API-Route/Function zum Empfangen der Presses vom Pi
-- [ ] Python-Skript auf dem Pi fertigstellen (sendet Presses ans Backend)
-- [ ] Next.js Dashboard: heutiger Status sichtbar
+- [x] Supabase-Projekt aufsetzen (Tabellen: presses, contacts)
+- [x] API-Route/Function zum Empfangen der Presses vom Pi
+- [x] Python-Skript auf dem Pi fertigstellen (sendet Presses ans Backend)
+- [x] Next.js Dashboard: heutiger Status sichtbar
 - [ ] Tägliche Prüf-Funktion: löst Alarm aus, wenn Meldung fehlt
 - [ ] Push-Benachrichtigung an Kontaktliste
-- [ ] Deployment auf Vercel
+- [x] Deployment auf Vercel
 
 ### Phase 2 – Ausbaustufen (später)
 - [ ] Prioritäts-/Eskalationsliste mit Abwesenheits-Schalter
-- [ ] WhatsApp-Benachrichtigung
 - [ ] Evtl. Verlaufs-/Statistik-Ansicht
+- [ ] WhatsApp-Benachrichtigung
 
 ## 6. Offene Fragen
 - Genaue Formel für Erwartungs-Uhrzeit (z.B. "Sonnenuntergang + X Stunden") – wird in Phase 1 festgelegt
@@ -68,3 +68,6 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 | 2026-09-09 | Dashboard mit Live-Status gewünscht |
 | 2026-09-09 | Pi steht am Ende bei Opa (WLAN vorhanden), Taster einfacher Verkabelungs-Typ |
 | 2026-09-09 | Alarm-Erwartungszeit an Sonnenuntergang gekoppelt statt fixer Uhrzeit |
+| 2026-09-17 | Presses werden nach 3 Tagen automatisch gelöscht (pg_cron in Supabase) |
+| 2026-09-17 | RPi.GPIO durch rpi-lgpio ersetzt (Kompatibilität mit Raspberry Pi OS Bookworm) |
+| 2026-09-17 | Pi-Skript wiederholt Sendeversuche bei Netzwerkfehlern (2/5/10/20s) statt Presses stillschweigend zu verwerfen |
