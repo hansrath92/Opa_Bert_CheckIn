@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getBerlinDateKey, getBerlinTimeLabel } from "@/lib/press";
@@ -8,6 +9,11 @@ type Press = {
   id: string;
   type: "morning" | "evening";
   created_at: string;
+};
+
+type Incident = {
+  type: "morning" | "evening";
+  contactName: string | null;
 };
 
 function StatusCard({ label, press }: { label: string; press: Press | null }) {
@@ -31,6 +37,7 @@ export default function Home() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [openIncidents, setOpenIncidents] = useState<Incident[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +66,16 @@ export default function Home() {
       setLastUpdated(new Date());
       setError(null);
       setIsInitialLoading(false);
+
+      try {
+        const statusResponse = await fetch("/api/incidents/status");
+        if (statusResponse.ok) {
+          const { incidents } = await statusResponse.json();
+          setOpenIncidents(incidents ?? []);
+        }
+      } catch {
+        // Eskalationsstatus ist informativ, ein Fehler hier blockiert die Hauptanzeige nicht
+      }
     }
 
     load();
@@ -87,10 +104,27 @@ export default function Home() {
             <StatusCard label="Morgens (aufgestanden)" press={morning} />
             <StatusCard label="Abends (Tür zu)" press={evening} />
           </div>
+
+          {openIncidents.map((incident) => (
+            <div
+              key={incident.type}
+              className="w-full max-w-md rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-center"
+            >
+              <p className="font-medium">
+                {incident.type === "morning" ? "Morgens" : "Abends"}: {incident.contactName} wurde kontaktiert
+              </p>
+              <p className="text-sm text-status-pending">wartet auf Rückmeldung</p>
+            </div>
+          ))}
+
           <div className="flex flex-col items-center gap-1 text-sm text-status-pending">
             <span>Zuletzt aktualisiert: {getBerlinTimeLabel(lastUpdated, { seconds: true })} Uhr</span>
             {error && <span>Aktualisierung fehlgeschlagen, versuche es weiter automatisch</span>}
           </div>
+
+          <Link href="/kontakt" className="text-sm underline text-status-pending">
+            Ich bin ein Kontakt
+          </Link>
         </>
       )}
     </main>

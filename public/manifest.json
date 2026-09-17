@@ -1,0 +1,8 @@
+{
+  "name": "Opa-Checkin",
+  "short_name": "Opa-Checkin",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a"
+}
