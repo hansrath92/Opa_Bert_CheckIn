@@ -1,0 +1,18 @@
+name: Check Alarm
+
+# Vercel Hobby erlaubt nur 1x täglich eigene Cron-Jobs - für die
+# 60-Minuten-Eskalation brauchen wir aber alle 15 Minuten einen Check.
+# GitHub Actions hat dieses Limit nicht, daher läuft der Trigger von hier aus.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check-alarm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call check-alarm endpoint
+        run: |
+          curl -sf -X GET "https://opa-bert-check-in.vercel.app/api/cron/check-alarm" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
