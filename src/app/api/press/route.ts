@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 function getPressType(date: Date): "morning" | "evening" {
-  const hour = Number(
-    new Intl.DateTimeFormat("de-DE", {
-      timeZone: "Europe/Berlin",
-      hour: "numeric",
-      hour12: false,
-    }).format(date)
-  );
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Berlin",
+    hour: "numeric",
+    hour12: false,
+  }).formatToParts(date);
+  const hour = Number(parts.find((part) => part.type === "hour")?.value);
   return hour < 12 ? "morning" : "evening";
 }
 
