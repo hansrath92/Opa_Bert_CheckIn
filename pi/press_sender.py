@@ -12,20 +12,31 @@ API_URL = os.environ["API_URL"]
 API_SECRET = os.environ["API_SECRET"]
 BUTTON_PIN = 17  # Physischer Pin 11, GND auf Pin 9
 
+RETRY_DELAYS_SECONDS = [2, 5, 10, 20]  # bei kurzen WLAN-Aussetzern erneut versuchen
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
 
 def send_press():
-    try:
-        response = requests.post(
-            API_URL,
-            headers={"x-api-key": API_SECRET},
-            timeout=10,
-        )
-        response.raise_for_status()
-        logging.info("Knopfdruck gesendet: %s", response.json())
-    except requests.RequestException as error:
-        logging.error("Fehler beim Senden: %s", error)
+    attempts = len(RETRY_DELAYS_SECONDS) + 1
+    for attempt in range(1, attempts + 1):
+        try:
+            response = requests.post(
+                API_URL,
+                headers={"x-api-key": API_SECRET},
+                timeout=10,
+            )
+            response.raise_for_status()
+            logging.info("Knopfdruck gesendet: %s", response.json())
+            return
+        except requests.RequestException as error:
+            logging.error(
+                "Fehler beim Senden (Versuch %s/%s): %s", attempt, attempts, error
+            )
+            if attempt < attempts:
+                time.sleep(RETRY_DELAYS_SECONDS[attempt - 1])
+
+    logging.error("Knopfdruck konnte nach %s Versuchen nicht gesendet werden.", attempts)
 
 
 def on_button_pressed(channel):
