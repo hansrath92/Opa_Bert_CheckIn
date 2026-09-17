@@ -1,13 +1,20 @@
 import webpush from "web-push";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-// Legitimiert diesen Server als Absender bei den Push-Diensten der Browser
-// (Google/Mozilla/etc.) - ohne das lehnen die Browser die Push-Zustellung ab.
-webpush.setVapidDetails(
-  "mailto:opa-checkin@example.com",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+// Erst bei tatsächlichem Bedarf aufrufen, nicht beim Laden des Moduls:
+// web-push wirft sofort einen Fehler, wenn die Keys fehlen/leer sind - das
+// würde sonst schon den Next.js-Build crashen, falls die Env-Variablen
+// (noch) nicht gesetzt sind, bevor überhaupt eine Push-Nachricht verschickt wird.
+let vapidConfigured = false;
+function ensureVapidConfigured() {
+  if (vapidConfigured) return;
+  webpush.setVapidDetails(
+    "mailto:opa-checkin@example.com",
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
+  vapidConfigured = true;
+}
 
 export type IncidentType = "morning" | "evening";
 
@@ -39,6 +46,8 @@ function messageFor(type: IncidentType): string {
 // Schickt eine Push-Nachricht an ALLE Geräte, mit denen sich dieser eine Kontakt
 // registriert hat (jemand kann z.B. Handy + Tablet abonniert haben).
 export async function notifyContact(contactId: string, type: IncidentType): Promise<void> {
+  ensureVapidConfigured();
+
   const { data: subscriptions, error } = await supabaseAdmin
     .from("push_subscriptions")
     .select("id, endpoint, p256dh, auth")
