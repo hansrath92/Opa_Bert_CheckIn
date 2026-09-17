@@ -42,6 +42,7 @@ export default function Home() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [openIncidents, setOpenIncidents] = useState<Incident[]>([]);
   const [piLastSeenAt, setPiLastSeenAt] = useState<Date | null>(null);
+  const [reminderStatus, setReminderStatus] = useState<"idle" | "sending" | "sent">("idle");
 
   useEffect(() => {
     let cancelled = false;
@@ -97,6 +98,16 @@ export default function Home() {
     };
   }, []);
 
+  async function handleRemindOpa() {
+    setReminderStatus("sending");
+    try {
+      const response = await fetch("/api/buzzer-trigger", { method: "POST" });
+      setReminderStatus(response.ok ? "sent" : "idle");
+    } catch {
+      setReminderStatus("idle");
+    }
+  }
+
   const hasOpenIncident = openIncidents.length > 0;
   const piMinutesAgo = piLastSeenAt ? (Date.now() - piLastSeenAt.getTime()) / (60 * 1000) : null;
   const isPiOnline = piMinutesAgo !== null && piMinutesAgo < PI_OFFLINE_THRESHOLD_MINUTES;
@@ -148,6 +159,21 @@ export default function Home() {
             </svg>
             Opa anrufen
           </a>
+
+          {!evening && (
+            <button
+              onClick={handleRemindOpa}
+              disabled={reminderStatus === "sending"}
+              className="rounded-2xl border border-border bg-card p-4 text-center text-lg font-medium"
+              style={{ borderRadius: "14px" }}
+            >
+              {reminderStatus === "sent"
+                ? "✓ Erinnerung ausgelöst"
+                : reminderStatus === "sending"
+                ? "Wird ausgelöst…"
+                : "Opa erinnern (Piepton)"}
+            </button>
+          )}
 
           {openIncidents.map((incident) => (
             <div
