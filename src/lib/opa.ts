@@ -1,0 +1,1 @@
+export const OPA_PHONE_NUMBER = "081231653";
