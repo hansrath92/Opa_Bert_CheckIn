@@ -48,7 +48,7 @@ def main():
     GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     # Taster verbindet GPIO17 mit GND -> Signal fällt beim Drücken von HIGH auf LOW
     GPIO.add_event_detect(
-        BUTTON_PIN, GPIO.FALLING, callback=on_button_pressed, bouncetime=1000
+        BUTTON_PIN, GPIO.FALLING, callback=on_button_pressed, bouncetime=800
     )
 
     logging.info("Warte auf Knopfdruck an GPIO%s ...", BUTTON_PIN)
