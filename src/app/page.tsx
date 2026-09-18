@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getBerlinDateKey, getBerlinTimeLabel } from "@/lib/press";
 import { OPA_PHONE_NUMBER } from "@/lib/opa";
+import { useContact } from "@/components/IdentityGate";
 
 // Nach zwei verpassten Heartbeats (Pi sendet alle 5 Minuten) gilt er als offline.
 const PI_OFFLINE_THRESHOLD_MINUTES = 10;
@@ -35,6 +36,7 @@ function StatusCard({ label, press }: { label: string; press: Press | null }) {
 }
 
 export default function Home() {
+  const contact = useContact();
   const [morning, setMorning] = useState<Press | null>(null);
   const [evening, setEvening] = useState<Press | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -112,7 +114,11 @@ export default function Home() {
   async function handleRemindOpa() {
     setReminderStatus("sending");
     try {
-      const response = await fetch("/api/buzzer-trigger", { method: "POST" });
+      const response = await fetch("/api/buzzer-trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact_id: contact.id }),
+      });
       setReminderStatus(response.ok ? "sent" : "idle");
     } catch {
       setReminderStatus("idle");

@@ -1,41 +1,66 @@
 "use client";
 
-// Reine Präsentationskomponente - wann sie erscheint (erster Login vs. manuell
-// über Einstellungen) entscheiden die Aufrufer, nicht diese Komponente selbst.
+import { useState } from "react";
+
+// Reine Präsentationskomponente - wann sie erscheint (automatisch nach dem
+// Beitreten vs. manuell über Einstellungen) entscheiden die Aufrufer.
+const STEPS = [
+  {
+    title: "Heute",
+    description:
+      "Hier siehst du auf einen Blick, ob Opa sich heute schon gemeldet hat - morgens und abends.",
+  },
+  {
+    title: "Opa erinnern",
+    description:
+      "Mit diesem Button kannst du jederzeit selbst einen Piepton bei Opa zuhause auslösen.",
+  },
+  {
+    title: "Verlauf",
+    description: "Hier siehst du die letzten Tage auf einen Blick, inklusive aller Erinnerungen.",
+  },
+  {
+    title: "Einstellungen",
+    description:
+      "Hier stellst du deine Benachrichtigungszeit ein - und findest diese Einführung jederzeit wieder.",
+  },
+];
+
 export default function OnboardingModal({ onClose }: { onClose: () => void }) {
+  const [step, setStep] = useState(0);
+  const isLast = step === STEPS.length - 1;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
-        <h2 className="mb-3 text-lg font-semibold">Willkommen bei Opa-Checkin</h2>
-        <ul className="mb-4 flex flex-col gap-2 text-sm text-foreground-secondary">
-          <li>
-            • Opa drückt morgens beim Aufstehen und abends beim Zuschließen der
-            Haustür auf seinen roten Knopf.
-          </li>
-          <li>
-            • Unter <strong className="text-foreground">Heute</strong> siehst du sofort,
-            ob er sich schon gemeldet hat.
-          </li>
-          <li>
-            • Meldet er sich zu lange nicht, wird automatisch die Familie
-            benachrichtigt - du musst nicht ständig nachschauen.
-          </li>
-          <li>
-            • Mit <strong className="text-foreground">Opa erinnern</strong> kannst
-            du jederzeit selbst einen Piepton bei ihm auslösen.
-          </li>
-          <li>
-            • Unter <strong className="text-foreground">Verlauf</strong> siehst du
-            die letzten Tage, unter <strong className="text-foreground">Einstellungen</strong>{" "}
-            deine Benachrichtigungszeit und diese Einführung nochmal.
-          </li>
-        </ul>
-        <button
-          onClick={onClose}
-          className="w-full rounded-full bg-accent px-4 py-2 text-sm font-medium text-white"
-        >
-          Verstanden
-        </button>
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6">
+        <h2 className="mb-2 text-lg font-semibold">{STEPS[step].title}</h2>
+        <p className="mb-5 text-sm text-foreground-secondary">{STEPS[step].description}</p>
+
+        <div className="mb-5 flex justify-center gap-1.5">
+          {STEPS.map((_, i) => (
+            <span
+              key={i}
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: i === step ? "var(--accent)" : "var(--border)" }}
+            />
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <button onClick={onClose} className="p-2 text-sm text-foreground-secondary">
+            Überspringen
+          </button>
+          <button
+            onClick={() => (isLast ? onClose() : setStep((s) => s + 1))}
+            className="rounded-full bg-accent px-6 py-3 text-sm font-medium text-white"
+          >
+            {isLast ? "Fertig" : "Weiter"}
+          </button>
+        </div>
+
+        <p className="mt-4 text-center text-xs text-foreground-secondary">
+          {step + 1} von {STEPS.length}
+        </p>
       </div>
     </div>
   );

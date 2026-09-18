@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
-import TabBar from "@/components/TabBar";
-import AppPopups from "@/components/AppPopups";
+import IdentityGate from "@/components/IdentityGate";
 
 const ibmPlexSans = IBM_Plex_Sans({
   variable: "--font-ibm-plex-sans",
@@ -20,9 +19,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${ibmPlexSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
-        <TabBar />
-        <AppPopups />
+        <IdentityGate>{children}</IdentityGate>
       </body>
     </html>
   );

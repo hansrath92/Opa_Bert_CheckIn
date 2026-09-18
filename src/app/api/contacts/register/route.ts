@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { buildSessionCookie } from "@/lib/session";
+import { hashPin } from "@/lib/pin";
 
 export async function POST(request: NextRequest) {
   const { name, pin, tolerance_hours } = await request.json();
@@ -12,11 +12,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "PIN muss aus genau 4 Ziffern bestehen" }, { status: 400 });
   }
 
+  const pin_hash = await hashPin(pin);
+
   const { data, error } = await supabaseAdmin
     .from("contacts")
     .insert({
       name,
-      pin,
+      pin_hash,
       tolerance_hours: typeof tolerance_hours === "number" ? tolerance_hours : 2,
     })
     .select("id, name, tolerance_hours")
@@ -32,8 +34,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const response = NextResponse.json({ success: true, contact: data });
-  const cookie = await buildSessionCookie(data.id);
-  response.cookies.set(cookie);
-  return response;
+  return NextResponse.json({ success: true, contact: data });
 }

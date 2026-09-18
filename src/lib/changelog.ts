@@ -7,6 +7,14 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.5.0",
+    date: "2026-09-18",
+    changes: [
+      "Login vereinfacht: Namensauswahl statt PIN-Anmeldung, PIN nur noch optionale Verwechslungs-Absicherung auf neuen Geräten",
+      "Erste-Schritte-Einführung jetzt als geführter Mehrschritt-Flow",
+    ],
+  },
+  {
     version: "0.4.0",
     date: "2026-09-18",
     changes: [

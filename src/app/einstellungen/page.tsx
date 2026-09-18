@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { subscribeToPush } from "@/lib/push";
 import { CURRENT_VERSION } from "@/lib/changelog";
 import OnboardingModal from "@/components/OnboardingModal";
-
-type StoredContact = { id: string; name: string; tolerance_hours: number };
+import { useContact, useUpdateContact } from "@/components/IdentityGate";
 
 function KontaktBereich() {
-  const router = useRouter();
-  const [contact, setContact] = useState<StoredContact | null>(null);
-  const [toleranceInput, setToleranceInput] = useState("2");
+  const contact = useContact();
+  const updateContact = useUpdateContact();
+  const [toleranceInput, setToleranceInput] = useState(String(contact.tolerance_hours));
   const [formError, setFormError] = useState<string | null>(null);
   const [pushStatus, setPushStatus] = useState<
     "idle" | "subscribing" | "subscribed" | "error"
@@ -19,26 +17,7 @@ function KontaktBereich() {
   const [myTurns, setMyTurns] = useState<("morning" | "evening")[]>([]);
   const [respondStatus, setRespondStatus] = useState<"idle" | "sending" | "sent">("idle");
 
-  // Wer eingeloggt ist, kommt jetzt aus der Session (Cookie) statt aus
-  // localStorage - middleware.ts garantiert bereits, dass diese Seite nur
-  // mit gültiger Session erreichbar ist. Sicherheitsnetz: falls die Session
-  // trotzdem "verwaist" ist (z.B. Kontakt wurde gerade eben gelöscht),
-  // zurück zu /login statt für immer bei "Lade…" hängen zu bleiben.
   useEffect(() => {
-    fetch("/api/contacts/me")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (data?.contact) {
-          setContact(data.contact);
-          setToleranceInput(String(data.contact.tolerance_hours));
-        } else {
-          router.push("/login");
-        }
-      });
-  }, [router]);
-
-  useEffect(() => {
-    if (!contact) return;
     const contactId = contact.id;
     let cancelled = false;
 
@@ -68,21 +47,18 @@ function KontaktBereich() {
   }, [contact]);
 
   async function handleSaveSettings() {
-    if (!contact) return;
     const tolerance_hours = Number(toleranceInput);
     if (!tolerance_hours || tolerance_hours <= 0) {
       setFormError("Bitte eine gültige Stundenzahl eingeben");
       return;
     }
-    // contact_id wird nicht mehr mitgeschickt - die Route liest den
-    // eingeloggten Kontakt selbst aus der Session.
     const response = await fetch("/api/contacts/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tolerance_hours }),
+      body: JSON.stringify({ contact_id: contact.id, tolerance_hours }),
     });
     if (response.ok) {
-      setContact({ ...contact, tolerance_hours });
+      updateContact({ ...contact, tolerance_hours });
       setFormError(null);
     } else {
       setFormError("Speichern fehlgeschlagen");
@@ -90,7 +66,6 @@ function KontaktBereich() {
   }
 
   async function handleSubscribe() {
-    if (!contact) return;
     setPushStatus("subscribing");
     try {
       await subscribeToPush(contact.id);
@@ -101,12 +76,11 @@ function KontaktBereich() {
   }
 
   async function handleRespond(type: "morning" | "evening", response: "met_opa" | "could_not_reach") {
-    if (!contact) return;
     setRespondStatus("sending");
     const res = await fetch("/api/incidents/respond", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, response }),
+      body: JSON.stringify({ contact_id: contact.id, type, response }),
     });
     if (res.ok) {
       setRespondStatus("sent");
@@ -119,17 +93,6 @@ function KontaktBereich() {
 
   const inputClass = "rounded-xl border border-border bg-card p-2";
   const buttonClass = "rounded-full border border-border bg-card px-4 py-2 text-sm font-medium";
-
-  if (!contact) {
-    // Kurzer Ladezustand, während /api/contacts/me antwortet. Ein echtes
-    // "nicht eingeloggt" gibt es hier nicht mehr - middleware.ts leitet
-    // dafür schon vorher auf /login um.
-    return (
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <p className="text-sm text-foreground-secondary">Lade…</p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col gap-4">

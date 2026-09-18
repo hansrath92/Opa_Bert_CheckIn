@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getBerlinDateKey } from "@/lib/press";
-import { getVerifiedContactId } from "@/lib/session";
 
-// Wird vom "Opa erinnern"-Button im Dashboard aufgerufen. Das Dashboard ist
-// seit der Einführung des dashboard-weiten Logins nur noch eingeloggt
-// erreichbar, daher können wir hier eine Session verlangen und protokollieren,
-// wer die Erinnerung ausgelöst hat.
+// Wird vom "Opa erinnern"-Button im Dashboard aufgerufen.
 export async function POST(request: NextRequest) {
-  const contactId = await getVerifiedContactId(request);
-  if (!contactId) {
-    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+  const { contact_id } = await request.json().catch(() => ({}));
+  if (!contact_id) {
+    return NextResponse.json({ error: "Ungültige Eingabe" }, { status: 400 });
   }
 
   const todayKey = getBerlinDateKey(new Date());
@@ -27,7 +23,7 @@ export async function POST(request: NextRequest) {
   // Verlauf jede einzelne Erinnerung eines Tages angezeigt werden kann.
   const { error: logError } = await supabaseAdmin
     .from("buzzer_triggers")
-    .insert({ contact_id: contactId });
+    .insert({ contact_id });
 
   if (logError) {
     return NextResponse.json({ error: logError.message }, { status: 500 });
