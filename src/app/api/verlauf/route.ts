@@ -26,11 +26,24 @@ export async function GET() {
     return NextResponse.json({ error: remindersError.message }, { status: 500 });
   }
 
+  // Für die Anzeige "Erinnerung aktiv von...bis" im Verlauf (Start: manueller
+  // Trigger oder automatischer Alarm, Ende: Abend-Druck bzw. "läuft noch").
+  const { data: dailyStatuses, error: dailyStatusError } = await supabaseAdmin
+    .from("daily_status")
+    .select("date_key, auto_triggered_at, evening_press_time")
+    .order("date_key", { ascending: false })
+    .limit(14);
+
+  if (dailyStatusError) {
+    return NextResponse.json({ error: dailyStatusError.message }, { status: 500 });
+  }
+
   return NextResponse.json({
     presses,
     reminders: (reminders ?? []).map((row) => ({
       created_at: row.created_at,
       contact_name: (row.contacts as unknown as { name: string } | null)?.name ?? "Unbekannt",
     })),
+    dailyStatuses: dailyStatuses ?? [],
   });
 }

@@ -5,11 +5,14 @@ import { getBerlinDateKey, getBerlinTimeLabel } from "@/lib/press";
 
 type Press = { type: "morning" | "evening"; created_at: string };
 type Reminder = { contact_name: string; created_at: string };
+type DailyStatus = { date_key: string; auto_triggered_at: string | null; evening_press_time: string | null };
 type DayEntry = {
   dateKey: string;
   morning: Press | null;
   evening: Press | null;
   reminders: Reminder[];
+  buzzerActiveSince: Date | null;
+  buzzerActiveUntil: Date | null;
 };
 
 // Presses werden nach 7 Tagen automatisch gelöscht (siehe Migration 0006),
@@ -37,6 +40,7 @@ export default function VerlaufPage() {
   const [days, setDays] = useState<DayEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const todayKey = getBerlinDateKey(new Date());
 
   useEffect(() => {
     async function load() {
@@ -47,24 +51,43 @@ export default function VerlaufPage() {
         return;
       }
 
-      const { presses, reminders } = (await response.json()) as {
+      const { presses, reminders, dailyStatuses } = (await response.json()) as {
         presses: Press[];
         reminders: Reminder[];
+        dailyStatuses: DailyStatus[];
       };
 
       const dateKeys = buildLastDays(DAYS_TO_SHOW);
 
       setDays(
-        dateKeys.map((dateKey) => ({
-          dateKey,
-          morning:
-            presses.find((r) => r.type === "morning" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
-          evening:
-            presses.find((r) => r.type === "evening" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
-          reminders: reminders
+        dateKeys.map((dateKey) => {
+          const dayReminders = reminders
             .filter((r) => getBerlinDateKey(new Date(r.created_at)) === dateKey)
-            .sort((a, b) => a.created_at.localeCompare(b.created_at)),
-        }))
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          const dailyStatus = dailyStatuses.find((d) => d.date_key === dateKey);
+
+          // Frühester Zeitpunkt, seit dem an diesem Tag erinnert wurde - egal ob
+          // automatisch (Sonnenuntergang+1h) oder manuell ("Opa erinnern").
+          const activeSinceCandidates: number[] = [];
+          if (dailyStatus?.auto_triggered_at) {
+            activeSinceCandidates.push(new Date(dailyStatus.auto_triggered_at).getTime());
+          }
+          if (dayReminders.length > 0) {
+            activeSinceCandidates.push(new Date(dayReminders[0].created_at).getTime());
+          }
+
+          return {
+            dateKey,
+            morning:
+              presses.find((r) => r.type === "morning" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
+            evening:
+              presses.find((r) => r.type === "evening" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
+            reminders: dayReminders,
+            buzzerActiveSince:
+              activeSinceCandidates.length > 0 ? new Date(Math.min(...activeSinceCandidates)) : null,
+            buzzerActiveUntil: dailyStatus?.evening_press_time ? new Date(dailyStatus.evening_press_time) : null,
+          };
+        })
       );
       setIsLoading(false);
     }
@@ -108,10 +131,18 @@ export default function VerlaufPage() {
                   )}
                 </div>
               </div>
-              {day.reminders.length > 0 && (
-                <div className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-sm text-foreground-secondary">
+              {day.buzzerActiveSince && (
+                <div className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-sm">
+                  <div className="text-accent">
+                    Erinnerung aktiv: {getBerlinTimeLabel(day.buzzerActiveSince)} Uhr
+                    {day.buzzerActiveUntil
+                      ? ` – ${getBerlinTimeLabel(day.buzzerActiveUntil)} Uhr`
+                      : day.dateKey === todayKey
+                      ? " – läuft noch"
+                      : " (kein Abend-Druck registriert)"}
+                  </div>
                   {day.reminders.map((reminder, index) => (
-                    <div key={index}>
+                    <div key={index} className="text-foreground-secondary">
                       Erinnert von: {reminder.contact_name} um {getBerlinTimeLabel(new Date(reminder.created_at))} Uhr
                     </div>
                   ))}

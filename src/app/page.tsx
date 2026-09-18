@@ -43,6 +43,7 @@ export default function Home() {
   const [openIncidents, setOpenIncidents] = useState<Incident[]>([]);
   const [piLastSeenAt, setPiLastSeenAt] = useState<Date | null>(null);
   const [reminderStatus, setReminderStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [buzzerActiveSince, setBuzzerActiveSince] = useState<Date | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +89,16 @@ export default function Home() {
         .eq("id", 1)
         .maybeSingle();
       if (heartbeat) setPiLastSeenAt(new Date(heartbeat.last_seen_at));
+
+      try {
+        const buzzerResponse = await fetch("/api/buzzer-live-status");
+        if (buzzerResponse.ok) {
+          const { shouldBuzz, activeSince } = await buzzerResponse.json();
+          setBuzzerActiveSince(shouldBuzz && activeSince ? new Date(activeSince) : null);
+        }
+      } catch {
+        // Live-Status ist informativ, ein Fehler hier blockiert die Hauptanzeige nicht
+      }
     }
 
     load();
@@ -111,6 +122,7 @@ export default function Home() {
   const hasOpenIncident = openIncidents.length > 0;
   const piMinutesAgo = piLastSeenAt ? (Date.now() - piLastSeenAt.getTime()) / (60 * 1000) : null;
   const isPiOnline = piMinutesAgo !== null && piMinutesAgo < PI_OFFLINE_THRESHOLD_MINUTES;
+  const isBuzzerActive = buzzerActiveSince !== null;
 
   return (
     <main className="flex flex-1 flex-col gap-4 px-6 py-6">
@@ -135,13 +147,27 @@ export default function Home() {
         </p>
       ) : (
         <>
-          {/* Alarm-Zustand deutlich sichtbar: grün = alles gut, orange = wartet auf Rückmeldung */}
+          {/* Alarm-Zustand deutlich sichtbar: grün = alles gut, teal = Piepton läuft gerade
+              bei Opa (noch keine Eskalation), orange = Eskalation läuft/wartet auf Rückmeldung */}
           <div
             className={`rounded-2xl p-4 text-center font-medium ${
-              hasOpenIncident ? "bg-warning/10 text-warning" : "bg-success-bg text-success-text"
+              hasOpenIncident
+                ? "bg-warning/10 text-warning"
+                : isBuzzerActive
+                ? "bg-accent/10 text-accent"
+                : "bg-success-bg text-success-text"
             }`}
           >
-            {hasOpenIncident ? "Achtung: Meldung fehlt" : "Alles in Ordnung"}
+            {hasOpenIncident
+              ? "Achtung: Meldung fehlt"
+              : isBuzzerActive
+              ? "Opa wird kontaktiert"
+              : "Alles in Ordnung"}
+            {isBuzzerActive && !hasOpenIncident && buzzerActiveSince && (
+              <div className="mt-1 text-xs font-normal opacity-80">
+                Piepton aktiv seit {getBerlinTimeLabel(buzzerActiveSince)} Uhr
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-4">
