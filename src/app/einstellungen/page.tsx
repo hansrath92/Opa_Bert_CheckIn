@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { subscribeToPush } from "@/lib/push";
 import { CURRENT_VERSION } from "@/lib/changelog";
 import OnboardingModal from "@/components/OnboardingModal";
@@ -8,6 +9,7 @@ import OnboardingModal from "@/components/OnboardingModal";
 type StoredContact = { id: string; name: string; tolerance_hours: number };
 
 function KontaktBereich() {
+  const router = useRouter();
   const [contact, setContact] = useState<StoredContact | null>(null);
   const [toleranceInput, setToleranceInput] = useState("2");
   const [formError, setFormError] = useState<string | null>(null);
@@ -19,7 +21,9 @@ function KontaktBereich() {
 
   // Wer eingeloggt ist, kommt jetzt aus der Session (Cookie) statt aus
   // localStorage - middleware.ts garantiert bereits, dass diese Seite nur
-  // mit gültiger Session erreichbar ist.
+  // mit gültiger Session erreichbar ist. Sicherheitsnetz: falls die Session
+  // trotzdem "verwaist" ist (z.B. Kontakt wurde gerade eben gelöscht),
+  // zurück zu /login statt für immer bei "Lade…" hängen zu bleiben.
   useEffect(() => {
     fetch("/api/contacts/me")
       .then((response) => (response.ok ? response.json() : null))
@@ -27,9 +31,11 @@ function KontaktBereich() {
         if (data?.contact) {
           setContact(data.contact);
           setToleranceInput(String(data.contact.tolerance_hours));
+        } else {
+          router.push("/login");
         }
       });
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!contact) return;
