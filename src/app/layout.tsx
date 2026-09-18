@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import TabBar from "@/components/TabBar";
-import WhatsNewPopup from "@/components/WhatsNewPopup";
+import AppPopups from "@/components/AppPopups";
 
 const ibmPlexSans = IBM_Plex_Sans({
   variable: "--font-ibm-plex-sans",
@@ -22,7 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
         <TabBar />
-        <WhatsNewPopup />
+        <AppPopups />
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { subscribeToPush } from "@/lib/push";
 import { CURRENT_VERSION } from "@/lib/changelog";
+import OnboardingModal from "@/components/OnboardingModal";
 
 type StoredContact = { id: string; name: string; tolerance_hours: number };
 
@@ -221,6 +222,8 @@ function KontaktlisteBereich() {
 }
 
 function HilfeBereich() {
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   return (
     <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-5 text-sm text-foreground-secondary">
       <h2 className="text-lg font-semibold text-foreground">Hilfe</h2>
@@ -236,7 +239,14 @@ function HilfeBereich() {
         Reagiert der aktuell kontaktierte Kontakt nicht innerhalb von 60 Minuten oder meldet "konnte ihn nicht
         erreichen", geht die Benachrichtigung automatisch an den/die nächste Person.
       </p>
+      <button
+        onClick={() => setShowOnboarding(true)}
+        className="mt-1 self-start rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground"
+      >
+        Erste Schritte nochmal ansehen
+      </button>
       <p className="pt-2 text-xs">Version {CURRENT_VERSION}</p>
+      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
     </div>
   );
 }
