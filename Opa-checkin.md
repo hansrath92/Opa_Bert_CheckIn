@@ -32,7 +32,7 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 ## 5. Design – Familien-Dashboard
 - **Stil:** Klar & klinisch-schlicht (viel Weißraum, wie eine Gesundheits-App)
 - **Struktur:** Mehrere Tabs – "Heute", "Verlauf", "Einstellungen"
-- **Inhalt "Heute":** Status beider täglicher Drücke, Uhrzeit des letzten Drucks, Alarm-Zustand (rot/grün), Technik-Status (Pi online?), Schnellzugriff "Opa anrufen", Button "Opa erinnern" (siehe Abschnitt 6)
+- **Inhalt "Heute":** Status beider täglicher Drücke, Uhrzeit des letzten Drucks, Alarm-Zustand (grün "Alles in Ordnung" / teal "Opa wird kontaktiert" solange der Piepton aktiv ist, inkl. "aktiv seit HH:MM" / orange "Achtung: Meldung fehlt" bei Eskalation), Technik-Status (Pi online?), Schnellzugriff "Opa anrufen", Button "Opa erinnern" (siehe Abschnitt 6)
 - **Inhalt "Verlauf":** Listenansicht der letzten Tage, pro Tag zusätzlich alle Erinnerungs-Auslösungen ("Erinnert von: Name um Uhrzeit", mehrere Einträge möglich)
 - **Inhalt "Einstellungen":** Kontaktliste verwalten, manuelle Anpassung der Alarm-Zeiten
 - Mockup fertig (MVP-Stand final) — https://claude.ai/artifact/LsoRmoCHzmdW8Y3TLX7bq9
@@ -52,7 +52,8 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
   1. Automatisch: 1 Stunde nach Sonnenuntergang, falls Abend-Druck fehlt
   2. Manuell: Familie klickt im Dashboard-Tab "Heute" auf "Opa erinnern", unabhängig von Uhrzeit
 - **Stopp-Bedingung:** Sobald der Abend-Druck registriert wird, hört der Pi spätestens beim nächsten Abfrage-Zyklus auf zu piepen
-- **Architektur:** Backend berechnet live einen "soll piepen"-Zustand (Abend-Druck fehlt UND (Zeitbedingung erfüllt ODER manuell ausgelöst)). Pi fragt das per Polling (alle paar Sekunden) ab und steuert den Piezo lokal an.
+- **Architektur:** Backend berechnet live einen "soll piepen"-Zustand (Abend-Druck fehlt UND (Zeitbedingung erfüllt ODER manuell ausgelöst)). Pi fragt das per Polling (alle paar Sekunden) ab und steuert den Piezo lokal an. Gemeinsame Logik in `src/lib/buzzer.ts`, genutzt von `/api/buzzer-status` (Pi) und `/api/buzzer-live-status` (Dashboard).
+- **Sichtbarkeit (seit 2026-09-18):** `daily_status.auto_triggered_at` hält fest, seit wann die automatische Bedingung an einem Tag zutrifft. Dashboard zeigt live "Opa wird kontaktiert" inkl. Startzeit auf "Heute", Verlauf zeigt pro Tag die Aktiv-Zeitspanne (inkl. Ende = Abend-Druck bzw. "läuft noch").
 - **Offene Frage:** Piepen läuft aktuell unbegrenzt weiter bis Opa drückt – kein automatischer Timeout. Bei Bedarf später ergänzbar.
 
 ## 7. Roadmap / Checkliste
@@ -70,6 +71,10 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 - [x] Push-Benachrichtigung an Kontaktliste (Service Worker, Manifest, `push.ts`, `/api/push/subscribe`)
 - [x] Deployment auf Vercel (live unter opa-bert-check-in.vercel.app)
 - [x] Sicherheitsfix (2026-09-18): dashboard-weites Login per Session-Cookie statt der bisherigen ungeprüften Contact-ID; Erinnerungs-Historie (wer hat wann "Opa erinnern" gedrückt) im Verlauf-Tab
+- [x] Onboarding "Erste-Schritte-Einführung" beim ersten Login, über Einstellungen jederzeit erneut aufrufbar (2026-09-18)
+- [x] Live-Sichtbarkeit "Opa wird kontaktiert" auf Heute + Aktiv-Zeitspanne im Verlauf (2026-09-18)
+- [x] App-Icon "Roter Knopf auf Teal" (Favicon, Apple-Touch-Icon, PWA-Manifest-Icons) (2026-09-18)
+- [x] Opas Telefonnummer und Standort aus dem Quellcode in Env-Variablen ausgelagert (2026-09-18)
 
 ### Phase 2 – Ausbaustufen (später)
 - [ ] Prioritäts-/Eskalationsliste mit Abwesenheits-Schalter
@@ -84,18 +89,13 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 - Genaue Formel für Erwartungs-Uhrzeit (z.B. "Sonnenuntergang + X Stunden")
 - Wie viele Familienmitglieder/Accounts zu Beginn?
 - Opas ungefährer Wohnort (für Sonnenuntergangs-Berechnung)
-- Eigenes App-Icon/Logo fehlt noch (aktuell Next.js-Standard-Favicon, `manifest.json` hat noch kein `icons`-Array) – wird für Homescreen-Icon (PWA) und Favicon gebraucht
 
 ## 8a. Was sonst noch ansteht
 
 - **Blockiert auf Rückmeldung vom Pi:** Heartbeat und Buzzer-Polling funktionieren auf dem echten Pi noch nicht (Diagnose per `journalctl -u opa-checkin` ausstehend)
-- **Vor Public-Schalten des Repos:**
-  - Rate-Limiting für `/api/contacts/login` + `/api/contacts/register` (4-stellige PIN, aktuell ohne Bremse)
-  - Opas hardcodierter Näherungs-Standort (`src/lib/sunset.ts`, aktuell "München" im Klartext) in Env-Variable auslagern
-  - **Neu gefunden:** `OPA_PHONE_NUMBER` in `src/lib/opa.ts` ist Opas echte Telefonnummer im Klartext im Code – vor Public-Schalten ebenfalls in eine Env-Variable auslagern, sonst landet sie öffentlich einsehbar auf GitHub
+- **Vor Public-Schalten des Repos:** Rate-Limiting für `/api/contacts/login` + `/api/contacts/register` (4-stellige PIN, aktuell ohne Bremse)
 - **Hardware/Deployment:** Pi-Umzug von Test-WLAN zu Opas Wohnung
-- **Design/Assets:** App-Logo/Icon, PWA-Icons für `manifest.json`
-- **Technisch:** `SESSION_SECRET` in Vercel-Projekt-Envs setzen (Voraussetzung für das Login in Produktion)
+- **Technisch:** `SESSION_SECRET`, `NEXT_PUBLIC_OPA_PHONE_NUMBER`, `OPA_LAT`, `OPA_LNG` in Vercel-Projekt-Envs setzen (Voraussetzung für Login bzw. Telefon-Anzeige/Sonnenuntergangs-Berechnung in Produktion)
 - **Später möglich:** Logout-Funktion (aktuell nicht vorgesehen, Session hält ~1 Jahr)
 
 ## 9. Technische Entscheidungen (Log)
@@ -111,3 +111,7 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 | 2026-09-17 | Buzzer: passiver Piezo GPIO27, 2000Hz/0.3 Lautstärke, Doppel-Piep alle 20s |
 | 2026-09-18 | Sicherheitslücke gefunden (ungeprüfte Contact-ID) → Entscheidung: statt Einzel-Patch dashboard-weites Login einführen, damit auch die Erinnerungs-Historie zuverlässig einer Person zugeordnet werden kann |
 | 2026-09-18 | Erinnerungs-Historie: jede Auslösung wird einzeln geloggt (nicht nur ein Boolean), Anzeige im bestehenden Verlauf-Tab je Tag |
+| 2026-09-18 | Onboarding-Inhalt an bestehende Hilfe-Sektion angelehnt statt neu formuliert; zentrale `AppPopups`-Steuerung statt zwei unabhängiger localStorage-Komponenten (Race-Condition-Vermeidung) |
+| 2026-09-18 | Buzzer-Live-Status: neue Route statt bestehende `/api/buzzer-status` fürs Dashboard mitzunutzen, da die Pi-Route mit `PI_API_SECRET` statt Login-Session arbeitet |
+| 2026-09-18 | App-Icon: "Roter Knopf auf Teal" statt abstrakterer Motive – zeigt wortwörtlich das zentrale Objekt der App, per `next/og` ohne externes Rendering |
+| 2026-09-18 | Telefonnummer bleibt trotz Env-Variable im Client-Bundle sichtbar (wird aktiv in der UI gebraucht) – Fix entfernt sie nur aus dem Quellcode/Repo, nicht aus der laufenden App |

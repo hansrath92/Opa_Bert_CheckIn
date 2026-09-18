@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 – 2026-09-18
+- Neu: Erste-Schritte-Einführung beim ersten Login, über Einstellungen jederzeit erneut aufrufbar
+- Neu: Heute zeigt live an, wenn Opa gerade per Piepton erinnert wird - inkl. seit wann; Verlauf zeigt das pro Tag
+- Neu: eigenes App-Icon
+- Sicherheit: Opas Telefonnummer und Standort nicht mehr im Quellcode
+
 ## 0.3.0 – 2026-09-18
 - Sicherheitsfix: Login schützt jetzt das ganze Dashboard (nicht mehr nur Einstellungen), per echter Session statt nachbaubarer Kontakt-ID
 - Neu: Verlauf zeigt jetzt, wer wann "Opa erinnern" gedrückt hat

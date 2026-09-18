@@ -7,6 +7,15 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.4.0",
+    date: "2026-09-18",
+    changes: [
+      "Neu: Erste-Schritte-Einführung beim ersten Login, über Einstellungen jederzeit erneut aufrufbar",
+      "Neu: Heute zeigt live an, wenn Opa gerade per Piepton erinnert wird - inkl. seit wann; Verlauf zeigt das pro Tag",
+      "Neu: eigenes App-Icon",
+    ],
+  },
+  {
     version: "0.3.0",
     date: "2026-09-18",
     changes: [
