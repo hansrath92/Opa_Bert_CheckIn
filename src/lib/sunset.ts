@@ -1,5 +1,10 @@
-// Ungefährer Standort von Opa (München) für die Sonnenuntergangs-Berechnung
-export const OPA_LOCATION = { lat: 48.1351, lng: 11.582 };
+// Ungefährer Standort von Opa für die Sonnenuntergangs-Berechnung. Nur
+// serverseitig verwendet (siehe unten), daher genügt eine normale Env-
+// Variable ohne NEXT_PUBLIC_-Prefix - landet nicht im Client-Bundle.
+export const OPA_LOCATION = {
+  lat: Number(process.env.OPA_LAT),
+  lng: Number(process.env.OPA_LNG),
+};
 
 export async function getSunsetTimeUTC(date: Date): Promise<Date> {
   const dateParam = date.toISOString().slice(0, 10); // YYYY-MM-DD
