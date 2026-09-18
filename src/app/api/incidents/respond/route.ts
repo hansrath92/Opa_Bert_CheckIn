@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getBerlinDateKey } from "@/lib/press";
 import { escalateToNextContact, getContactsByPriority, resolveIncident } from "@/lib/escalation";
+import { getVerifiedContactId } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
-  const { contact_id, type, response } = await request.json();
+  // contact_id kommt bewusst NICHT mehr aus dem Body - sonst könnte jemand
+  // im Namen eines fremden Kontakts eine Eskalation beantworten.
+  const contactId = await getVerifiedContactId(request);
+  if (!contactId) {
+    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+  }
+
+  const { type, response } = await request.json();
 
   if (
-    !contact_id ||
     (type !== "morning" && type !== "evening") ||
     (response !== "met_opa" && response !== "could_not_reach")
   ) {
@@ -35,7 +42,7 @@ export async function POST(request: NextRequest) {
     .from("incident_contacts")
     .select("id")
     .eq("incident_id", incident.id)
-    .eq("contact_id", contact_id)
+    .eq("contact_id", contactId)
     .is("responded_at", null)
     .maybeSingle();
 
@@ -60,7 +67,7 @@ export async function POST(request: NextRequest) {
   }
 
   const contacts = await getContactsByPriority();
-  const nextContact = await escalateToNextContact(incident.id, type, contacts, contact_id);
+  const nextContact = await escalateToNextContact(incident.id, type, contacts, contactId);
 
   return NextResponse.json({ status: "eskaliert", kontaktiert: nextContact.name });
 }

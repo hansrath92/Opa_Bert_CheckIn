@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { buildSessionCookie } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
   const { name, pin, tolerance_hours } = await request.json();
@@ -31,5 +32,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, contact: data });
+  const response = NextResponse.json({ success: true, contact: data });
+  const cookie = await buildSessionCookie(data.id);
+  response.cookies.set(cookie);
+  return response;
 }

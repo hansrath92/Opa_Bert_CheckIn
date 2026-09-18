@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 – 2026-09-18
+- Sicherheitsfix: Login schützt jetzt das ganze Dashboard (nicht mehr nur Einstellungen), per echter Session statt nachbaubarer Kontakt-ID
+- Neu: Verlauf zeigt jetzt, wer wann "Opa erinnern" gedrückt hat
+
 ## 0.2.0 – 2026-09-17
 - Eskalationskette: Kontakte werden nach eigener Toleranz-Zeit priorisiert und automatisch nacheinander benachrichtigt
 - Morgen-Alarm (11 Uhr) zusätzlich zum Abend-Alarm

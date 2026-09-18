@@ -6,13 +6,8 @@ import { CURRENT_VERSION } from "@/lib/changelog";
 
 type StoredContact = { id: string; name: string; tolerance_hours: number };
 
-const STORAGE_KEY = "opa-checkin-contact";
-
 function KontaktBereich() {
   const [contact, setContact] = useState<StoredContact | null>(null);
-  const [mode, setMode] = useState<"login" | "register">("login");
-  const [pin, setPin] = useState("");
-  const [name, setName] = useState("");
   const [toleranceInput, setToleranceInput] = useState("2");
   const [formError, setFormError] = useState<string | null>(null);
   const [pushStatus, setPushStatus] = useState<
@@ -21,13 +16,18 @@ function KontaktBereich() {
   const [myTurns, setMyTurns] = useState<("morning" | "evening")[]>([]);
   const [respondStatus, setRespondStatus] = useState<"idle" | "sending" | "sent">("idle");
 
+  // Wer eingeloggt ist, kommt jetzt aus der Session (Cookie) statt aus
+  // localStorage - middleware.ts garantiert bereits, dass diese Seite nur
+  // mit gültiger Session erreichbar ist.
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as StoredContact;
-      setContact(parsed);
-      setToleranceInput(String(parsed.tolerance_hours));
-    }
+    fetch("/api/contacts/me")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data?.contact) {
+          setContact(data.contact);
+          setToleranceInput(String(data.contact.tolerance_hours));
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -60,46 +60,6 @@ function KontaktBereich() {
     };
   }, [contact]);
 
-  function saveContact(newContact: StoredContact) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newContact));
-    setContact(newContact);
-    setToleranceInput(String(newContact.tolerance_hours));
-  }
-
-  async function handleLogin() {
-    setFormError(null);
-    const response = await fetch("/api/contacts/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setFormError(data.error ?? "Anmeldung fehlgeschlagen");
-      return;
-    }
-    saveContact(data.contact);
-  }
-
-  async function handleRegister() {
-    setFormError(null);
-    const response = await fetch("/api/contacts/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        pin,
-        tolerance_hours: Number(toleranceInput) || 2,
-      }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setFormError(data.error ?? "Registrierung fehlgeschlagen");
-      return;
-    }
-    saveContact(data.contact);
-  }
-
   async function handleSaveSettings() {
     if (!contact) return;
     const tolerance_hours = Number(toleranceInput);
@@ -107,13 +67,15 @@ function KontaktBereich() {
       setFormError("Bitte eine gültige Stundenzahl eingeben");
       return;
     }
+    // contact_id wird nicht mehr mitgeschickt - die Route liest den
+    // eingeloggten Kontakt selbst aus der Session.
     const response = await fetch("/api/contacts/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contact_id: contact.id, tolerance_hours }),
+      body: JSON.stringify({ tolerance_hours }),
     });
     if (response.ok) {
-      saveContact({ ...contact, tolerance_hours });
+      setContact({ ...contact, tolerance_hours });
       setFormError(null);
     } else {
       setFormError("Speichern fehlgeschlagen");
@@ -137,7 +99,7 @@ function KontaktBereich() {
     const res = await fetch("/api/incidents/respond", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contact_id: contact.id, type, response }),
+      body: JSON.stringify({ type, response }),
     });
     if (res.ok) {
       setRespondStatus("sent");
@@ -152,48 +114,12 @@ function KontaktBereich() {
   const buttonClass = "rounded-full border border-border bg-card px-4 py-2 text-sm font-medium";
 
   if (!contact) {
+    // Kurzer Ladezustand, während /api/contacts/me antwortet. Ein echtes
+    // "nicht eingeloggt" gibt es hier nicht mehr - middleware.ts leitet
+    // dafür schon vorher auf /login um.
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
-        <h2 className="text-lg font-semibold">Ich bin ein Kontakt</h2>
-
-        <div className="flex gap-2 text-sm">
-          <button onClick={() => setMode("login")} className={mode === "login" ? "font-semibold text-accent" : "text-foreground-secondary"}>
-            Ich habe schon eine PIN
-          </button>
-          <span className="text-foreground-secondary">·</span>
-          <button onClick={() => setMode("register")} className={mode === "register" ? "font-semibold text-accent" : "text-foreground-secondary"}>
-            Ich bin neu
-          </button>
-        </div>
-
-        {mode === "register" && (
-          <input placeholder="Dein Name" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
-        )}
-        <input
-          placeholder="4-stellige PIN"
-          value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-          className={inputClass}
-        />
-        {mode === "register" && (
-          <label className="flex flex-col gap-1 text-sm text-foreground-secondary">
-            Nach wie vielen Stunden nach Sonnenuntergang willst du benachrichtigt werden?
-            <input
-              type="number"
-              min={0.5}
-              step={0.5}
-              value={toleranceInput}
-              onChange={(e) => setToleranceInput(e.target.value)}
-              className={inputClass}
-            />
-          </label>
-        )}
-
-        {formError && <p className="text-sm text-error">{formError}</p>}
-
-        <button onClick={mode === "login" ? handleLogin : handleRegister} className={buttonClass}>
-          {mode === "login" ? "Anmelden" : "Registrieren"}
-        </button>
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <p className="text-sm text-foreground-secondary">Lade…</p>
       </div>
     );
   }

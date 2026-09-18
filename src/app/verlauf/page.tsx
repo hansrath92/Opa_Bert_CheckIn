@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { getBerlinDateKey, getBerlinTimeLabel } from "@/lib/press";
 
 type Press = { type: "morning" | "evening"; created_at: string };
+type Reminder = { contact_name: string; created_at: string };
 type DayEntry = {
   dateKey: string;
   morning: Press | null;
   evening: Press | null;
+  reminders: Reminder[];
 };
 
 // Presses werden nach 7 Tagen automatisch gelöscht (siehe Migration 0006),
@@ -39,28 +40,30 @@ export default function VerlaufPage() {
 
   useEffect(() => {
     async function load() {
-      const { data, error: fetchError } = await supabase
-        .from("presses")
-        .select("type, created_at")
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (fetchError) {
-        setError(fetchError.message);
+      const response = await fetch("/api/verlauf");
+      if (!response.ok) {
+        setError("Laden fehlgeschlagen");
         setIsLoading(false);
         return;
       }
 
+      const { presses, reminders } = (await response.json()) as {
+        presses: Press[];
+        reminders: Reminder[];
+      };
+
       const dateKeys = buildLastDays(DAYS_TO_SHOW);
-      const rows = (data ?? []) as Press[];
 
       setDays(
         dateKeys.map((dateKey) => ({
           dateKey,
           morning:
-            rows.find((r) => r.type === "morning" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
+            presses.find((r) => r.type === "morning" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
           evening:
-            rows.find((r) => r.type === "evening" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
+            presses.find((r) => r.type === "evening" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
+          reminders: reminders
+            .filter((r) => getBerlinDateKey(new Date(r.created_at)) === dateKey)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at)),
         }))
       );
       setIsLoading(false);
@@ -105,6 +108,15 @@ export default function VerlaufPage() {
                   )}
                 </div>
               </div>
+              {day.reminders.length > 0 && (
+                <div className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-sm text-foreground-secondary">
+                  {day.reminders.map((reminder, index) => (
+                    <div key={index}>
+                      Erinnert von: {reminder.contact_name} um {getBerlinTimeLabel(new Date(reminder.created_at))} Uhr
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -7,6 +7,14 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.3.0",
+    date: "2026-09-18",
+    changes: [
+      "Sicherheitsfix: Login schützt jetzt das ganze Dashboard, per echter Session statt nachbaubarer Kontakt-ID",
+      "Neu: Verlauf zeigt, wer wann 'Opa erinnern' gedrückt hat",
+    ],
+  },
+  {
     version: "0.2.0",
     date: "2026-09-17",
     changes: [

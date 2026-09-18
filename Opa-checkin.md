@@ -27,13 +27,13 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 - **Raspberry Pi:** Python-Skript liest den Button-GPIO-Pin, sendet bei Tastendruck einen Request an eine Supabase Edge Function / API-Route. Ein zweiter Teil des Skripts fragt regelmäßig (Polling) beim Backend ab, ob der Buzzer aktiv sein soll (siehe Abschnitt 6).
 - **Alarm-Logik:** zeitgesteuerte Funktion (z.B. Supabase Cron / Vercel Cron), die täglich prüft, ob die erwartete Meldung da ist
 - **Notification Phase 1:** Web Push über PWA (iOS braucht 16.4+, Detail-Check in Phase 1)
-- **Auth:** Supabase Auth, mehrere Familien-Accounts
+- **Auth:** kein Supabase Auth, sondern eigenes leichtgewichtiges Login: 4-stellige PIN pro Kontakt (`contacts.pin`), nach erfolgreichem Login/Register signiertes httpOnly-Session-Cookie (`opa_session`, HMAC-SHA256 mit `SESSION_SECRET`, ca. 1 Jahr gültig). Seit 2026-09-18 schützt `middleware.ts` das **gesamte Dashboard** (nicht mehr nur Einstellungen) – ohne gültige Session geht's nur zu `/login`.
 
 ## 5. Design – Familien-Dashboard
 - **Stil:** Klar & klinisch-schlicht (viel Weißraum, wie eine Gesundheits-App)
 - **Struktur:** Mehrere Tabs – "Heute", "Verlauf", "Einstellungen"
 - **Inhalt "Heute":** Status beider täglicher Drücke, Uhrzeit des letzten Drucks, Alarm-Zustand (rot/grün), Technik-Status (Pi online?), Schnellzugriff "Opa anrufen", Button "Opa erinnern" (siehe Abschnitt 6)
-- **Inhalt "Verlauf":** Listenansicht der letzten Tage
+- **Inhalt "Verlauf":** Listenansicht der letzten Tage, pro Tag zusätzlich alle Erinnerungs-Auslösungen ("Erinnert von: Name um Uhrzeit", mehrere Einträge möglich)
 - **Inhalt "Einstellungen":** Kontaktliste verwalten, manuelle Anpassung der Alarm-Zeiten
 - Mockup fertig (MVP-Stand final) — https://claude.ai/artifact/LsoRmoCHzmdW8Y3TLX7bq9
 
@@ -61,14 +61,15 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 - [x] Projektname, Alarm-Regel-Prinzip, GitHub-Repo, Pi eingerichtet, Button verkabelt & getestet, Buzzer verkabelt & getestet
 
 ### Phase 1 – MVP (aktuell)
-- [ ] Supabase-Projekt aufsetzen (Tabellen: presses/daily_status, contacts)
-- [ ] API-Route zum Empfangen der Button-Presses vom Pi
-- [ ] API-Route + Logik für Buzzer-Status (lesen für Pi, manuell auslösen für Dashboard)
-- [ ] Python-Skript auf dem Pi fertigstellen (Presses senden + Buzzer-Polling)
-- [ ] Next.js Dashboard nach Mockup/Design-Tokens bauen (Heute/Verlauf/Einstellungen)
-- [ ] Tägliche Prüf-Funktion: löst Alarm aus, wenn Meldung fehlt
-- [ ] Push-Benachrichtigung an Kontaktliste
-- [ ] Deployment auf Vercel
+- [x] Supabase-Projekt aufsetzen (Tabellen: presses/daily_status, contacts) – 7 Migrationen (0001–0007)
+- [x] API-Route zum Empfangen der Button-Presses vom Pi (`/api/press`)
+- [x] API-Route + Logik für Buzzer-Status (`/api/buzzer-status` zum Lesen, `/api/buzzer-trigger` zum manuellen Auslösen)
+- [x] Python-Skript auf dem Pi fertigstellen (`press_sender.py`: Presses senden inkl. Retry, Heartbeat, Buzzer-Polling + Piezo-Ansteuerung GPIO27) – noch nicht auf dem echten Pi getestet
+- [x] Next.js Dashboard nach Mockup/Design-Tokens bauen (Heute/Verlauf/Einstellungen)
+- [x] Tägliche Prüf-Funktion: löst Alarm aus, wenn Meldung fehlt (`/api/cron/check-alarm`, per GitHub Actions alle 15 Min getriggert)
+- [x] Push-Benachrichtigung an Kontaktliste (Service Worker, Manifest, `push.ts`, `/api/push/subscribe`)
+- [x] Deployment auf Vercel (live unter opa-bert-check-in.vercel.app)
+- [x] Sicherheitsfix (2026-09-18): dashboard-weites Login per Session-Cookie statt der bisherigen ungeprüften Contact-ID; Erinnerungs-Historie (wer hat wann "Opa erinnern" gedrückt) im Verlauf-Tab
 
 ### Phase 2 – Ausbaustufen (später)
 - [ ] Prioritäts-/Eskalationsliste mit Abwesenheits-Schalter
@@ -83,6 +84,19 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 - Genaue Formel für Erwartungs-Uhrzeit (z.B. "Sonnenuntergang + X Stunden")
 - Wie viele Familienmitglieder/Accounts zu Beginn?
 - Opas ungefährer Wohnort (für Sonnenuntergangs-Berechnung)
+- Eigenes App-Icon/Logo fehlt noch (aktuell Next.js-Standard-Favicon, `manifest.json` hat noch kein `icons`-Array) – wird für Homescreen-Icon (PWA) und Favicon gebraucht
+
+## 8a. Was sonst noch ansteht
+
+- **Blockiert auf Rückmeldung vom Pi:** Heartbeat und Buzzer-Polling funktionieren auf dem echten Pi noch nicht (Diagnose per `journalctl -u opa-checkin` ausstehend)
+- **Vor Public-Schalten des Repos:**
+  - Rate-Limiting für `/api/contacts/login` + `/api/contacts/register` (4-stellige PIN, aktuell ohne Bremse)
+  - Opas hardcodierter Näherungs-Standort (`src/lib/sunset.ts`, aktuell "München" im Klartext) in Env-Variable auslagern
+  - **Neu gefunden:** `OPA_PHONE_NUMBER` in `src/lib/opa.ts` ist Opas echte Telefonnummer im Klartext im Code – vor Public-Schalten ebenfalls in eine Env-Variable auslagern, sonst landet sie öffentlich einsehbar auf GitHub
+- **Hardware/Deployment:** Pi-Umzug von Test-WLAN zu Opas Wohnung
+- **Design/Assets:** App-Logo/Icon, PWA-Icons für `manifest.json`
+- **Technisch:** `SESSION_SECRET` in Vercel-Projekt-Envs setzen (Voraussetzung für das Login in Produktion)
+- **Später möglich:** Logout-Funktion (aktuell nicht vorgesehen, Session hält ~1 Jahr)
 
 ## 9. Technische Entscheidungen (Log)
 | Datum | Entscheidung |
@@ -95,3 +109,5 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 | 2026-09-09 | Alarm-Erwartungszeit an Sonnenuntergang gekoppelt statt fixer Uhrzeit |
 | 2026-09-17 | Design: klinisch-schlicht, IBM Plex Sans, Teal-Akzent, 3 Tabs |
 | 2026-09-17 | Buzzer: passiver Piezo GPIO27, 2000Hz/0.3 Lautstärke, Doppel-Piep alle 20s |
+| 2026-09-18 | Sicherheitslücke gefunden (ungeprüfte Contact-ID) → Entscheidung: statt Einzel-Patch dashboard-weites Login einführen, damit auch die Erinnerungs-Historie zuverlässig einer Person zugeordnet werden kann |
+| 2026-09-18 | Erinnerungs-Historie: jede Auslösung wird einzeln geloggt (nicht nur ein Boolean), Anzeige im bestehenden Verlauf-Tab je Tag |

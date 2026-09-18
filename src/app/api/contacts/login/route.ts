@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { buildSessionCookie } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
   const { pin } = await request.json();
@@ -21,5 +22,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "PIN nicht gefunden" }, { status: 404 });
   }
 
-  return NextResponse.json({ contact: data });
+  // Signiertes Session-Cookie setzen, damit spätere Requests dieses Kontakts
+  // server-seitig verifiziert werden können, statt der Client-Angabe zu vertrauen.
+  const response = NextResponse.json({ contact: data });
+  const cookie = await buildSessionCookie(data.id);
+  response.cookies.set(cookie);
+  return response;
 }
