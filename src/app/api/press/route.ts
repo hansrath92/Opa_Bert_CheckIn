@@ -18,10 +18,13 @@ export async function POST(request: NextRequest) {
 
   // daily_status mitpflegen: ein abendlicher Druck beendet automatisch den
   // Buzzer-Zustand, weil /api/buzzer-status dann "evening_press_time gesetzt" sieht.
+  // buzzer_manually_triggered wird bei JEDEM Druck (auch morgens) zurückgesetzt -
+  // sonst bleibt ein einzelnes "Opa erinnern" für den Rest des Tages aktiv, selbst
+  // wenn Opa längst geantwortet hat, weil das Flag sonst nirgendwo zurückgesetzt wird.
   const dailyStatusUpdate =
     type === "morning"
-      ? { morning_press_time: now.toISOString() }
-      : { evening_press_time: now.toISOString() };
+      ? { morning_press_time: now.toISOString(), buzzer_manually_triggered: false }
+      : { evening_press_time: now.toISOString(), buzzer_manually_triggered: false };
 
   const { error: dailyStatusError } = await supabaseAdmin
     .from("daily_status")

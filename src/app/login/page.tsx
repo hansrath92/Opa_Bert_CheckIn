@@ -14,41 +14,68 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [toleranceInput, setToleranceInput] = useState("2");
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Liest die JSON-Antwort sicher aus, auch wenn der Server mal eine leere
+  // oder kaputte Antwort schickt (z.B. bei einem Server-Fehler) - vorher
+  // ließ genau das den Button ohne jede Rückmeldung "hängen", weil
+  // response.json() dann eine ungefangene Exception geworfen hat.
+  async function safeParseJson(response: Response): Promise<{ error?: string; contact?: unknown }> {
+    try {
+      return await response.json();
+    } catch {
+      return {};
+    }
+  }
 
   async function handleLogin() {
     setFormError(null);
-    const response = await fetch("/api/contacts/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setFormError(data.error ?? "Anmeldung fehlgeschlagen");
-      return;
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/contacts/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      const data = await safeParseJson(response);
+      if (!response.ok) {
+        setFormError(data.error ?? `Anmeldung fehlgeschlagen (Status ${response.status})`);
+        return;
+      }
+      router.push("/");
+      router.refresh();
+    } catch {
+      setFormError("Verbindung fehlgeschlagen, bitte erneut versuchen");
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push("/");
-    router.refresh();
   }
 
   async function handleRegister() {
     setFormError(null);
-    const response = await fetch("/api/contacts/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        pin,
-        tolerance_hours: Number(toleranceInput) || 2,
-      }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setFormError(data.error ?? "Registrierung fehlgeschlagen");
-      return;
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/contacts/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          pin,
+          tolerance_hours: Number(toleranceInput) || 2,
+        }),
+      });
+      const data = await safeParseJson(response);
+      if (!response.ok) {
+        setFormError(data.error ?? `Registrierung fehlgeschlagen (Status ${response.status})`);
+        return;
+      }
+      router.push("/");
+      router.refresh();
+    } catch {
+      setFormError("Verbindung fehlgeschlagen, bitte erneut versuchen");
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push("/");
-    router.refresh();
   }
 
   const inputClass = "rounded-xl border border-border bg-card p-2";
@@ -94,8 +121,12 @@ export default function LoginPage() {
 
         {formError && <p className="text-sm text-error">{formError}</p>}
 
-        <button onClick={mode === "login" ? handleLogin : handleRegister} className={buttonClass}>
-          {mode === "login" ? "Anmelden" : "Registrieren"}
+        <button
+          onClick={mode === "login" ? handleLogin : handleRegister}
+          disabled={isSubmitting}
+          className={buttonClass}
+        >
+          {isSubmitting ? "Wird geprüft…" : mode === "login" ? "Anmelden" : "Registrieren"}
         </button>
       </div>
     </main>
