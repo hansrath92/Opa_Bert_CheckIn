@@ -31,6 +31,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Kein offener Vorfall heute" }, { status: 404 });
   }
 
+  // "met_opa" darf JEDER Kontakt melden, nicht nur der gerade aktuell
+  // benachrichtigte - wer zufällig bei Opa vorbeischaut, soll den Vorfall
+  // auch auflösen können, ohne erst an der Reihe zu sein.
+  if (response === "met_opa") {
+    const { data: step } = await supabaseAdmin
+      .from("incident_contacts")
+      .select("id")
+      .eq("incident_id", incident.id)
+      .eq("contact_id", contact_id)
+      .is("responded_at", null)
+      .maybeSingle();
+
+    if (step) {
+      await supabaseAdmin
+        .from("incident_contacts")
+        .update({ responded_at: new Date().toISOString(), response })
+        .eq("id", step.id);
+    }
+
+    await resolveIncident(incident.id);
+    return NextResponse.json({ status: "gelöst" });
+  }
+
+  // "could_not_reach" eskaliert zum nächsten Kontakt in der Kette - das
+  // ergibt nur Sinn für den gerade aktuell benachrichtigten Kontakt.
   const { data: step, error: stepError } = await supabaseAdmin
     .from("incident_contacts")
     .select("id")
@@ -53,11 +78,6 @@ export async function POST(request: NextRequest) {
     .from("incident_contacts")
     .update({ responded_at: new Date().toISOString(), response })
     .eq("id", step.id);
-
-  if (response === "met_opa") {
-    await resolveIncident(incident.id);
-    return NextResponse.json({ status: "gelöst" });
-  }
 
   const contacts = await getContactsByPriority();
   const nextContact = await escalateToNextContact(incident.id, type, contacts, contact_id);

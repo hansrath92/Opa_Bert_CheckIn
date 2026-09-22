@@ -46,6 +46,7 @@ export default function Home() {
   const [piLastSeenAt, setPiLastSeenAt] = useState<Date | null>(null);
   const [reminderStatus, setReminderStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [buzzerActiveSince, setBuzzerActiveSince] = useState<Date | null>(null);
+  const [metOpaStatus, setMetOpaStatus] = useState<"idle" | "sending" | "sent">("idle");
 
   useEffect(() => {
     let cancelled = false;
@@ -111,6 +112,23 @@ export default function Home() {
     };
   }, []);
 
+  async function handleMetOpa(type: "morning" | "evening") {
+    setMetOpaStatus("sending");
+    try {
+      const response = await fetch("/api/incidents/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact_id: contact.id, type, response: "met_opa" }),
+      });
+      if (response.ok) {
+        setOpenIncidents((prev) => prev.filter((i) => i.type !== type));
+      }
+      setMetOpaStatus("idle");
+    } catch {
+      setMetOpaStatus("idle");
+    }
+  }
+
   async function handleRemindOpa() {
     setReminderStatus("sending");
     try {
@@ -133,7 +151,10 @@ export default function Home() {
   return (
     <main className="flex flex-1 flex-col gap-4 px-6 py-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Heute</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">Heute</h1>
+          <p className="text-xs text-foreground-secondary">Angemeldet als {contact.name}</p>
+        </div>
         {piLastSeenAt && (
           <span
             className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -210,12 +231,23 @@ export default function Home() {
           {openIncidents.map((incident) => (
             <div
               key={incident.type}
-              className="rounded-2xl border border-warning/40 bg-warning/10 p-4 text-center"
+              className="flex flex-col gap-3 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-center"
             >
-              <p className="font-medium">
-                {incident.type === "morning" ? "Morgens" : "Abends"}: {incident.contactName} wurde kontaktiert
-              </p>
-              <p className="text-sm text-foreground-secondary">wartet auf Rückmeldung</p>
+              <div>
+                <p className="font-medium">
+                  {incident.type === "morning" ? "Morgens" : "Abends"}: {incident.contactName} wurde kontaktiert
+                </p>
+                <p className="text-sm text-foreground-secondary">wartet auf Rückmeldung</p>
+              </div>
+              {/* Jeder darf das melden, nicht nur der gerade kontaktierte Kontakt -
+                  falls zufällig jemand anderes bei Opa vorbeischaut. */}
+              <button
+                onClick={() => handleMetOpa(incident.type)}
+                disabled={metOpaStatus === "sending"}
+                className="rounded-full bg-success-text px-4 py-2 text-sm font-medium text-white"
+              >
+                Ich habe ihn getroffen
+              </button>
             </div>
           ))}
 
