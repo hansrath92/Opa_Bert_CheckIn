@@ -44,7 +44,7 @@ export default function Home() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [openIncidents, setOpenIncidents] = useState<Incident[]>([]);
   const [piLastSeenAt, setPiLastSeenAt] = useState<Date | null>(null);
-  const [reminderStatus, setReminderStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [reminderStatus, setReminderStatus] = useState<"idle" | "sending">("idle");
   const [buzzerActiveSince, setBuzzerActiveSince] = useState<Date | null>(null);
   const [metOpaStatus, setMetOpaStatus] = useState<"idle" | "sending" | "sent">("idle");
 
@@ -130,14 +130,19 @@ export default function Home() {
   }
 
   async function handleRemindOpa() {
+    const nextActive = !isBuzzerActive;
     setReminderStatus("sending");
     try {
       const response = await fetch("/api/buzzer-trigger", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contact_id: contact.id }),
+        body: JSON.stringify({ contact_id: contact.id, active: nextActive }),
       });
-      setReminderStatus(response.ok ? "sent" : "idle");
+      if (response.ok) {
+        // Optimistisch sofort anzeigen, der nächste 30-Sekunden-Poll bestätigt/korrigiert.
+        setBuzzerActiveSince(nextActive ? new Date() : null);
+      }
+      setReminderStatus("idle");
     } catch {
       setReminderStatus("idle");
     }
@@ -217,13 +222,15 @@ export default function Home() {
             <button
               onClick={handleRemindOpa}
               disabled={reminderStatus === "sending"}
-              className="rounded-2xl border border-border bg-card p-4 text-center text-lg font-medium"
+              className={`rounded-2xl p-4 text-center text-lg font-medium ${
+                isBuzzerActive ? "border border-accent bg-accent/10 text-accent" : "border border-border bg-card"
+              }`}
               style={{ borderRadius: "14px" }}
             >
-              {reminderStatus === "sent"
-                ? "✓ Erinnerung ausgelöst"
-                : reminderStatus === "sending"
+              {reminderStatus === "sending"
                 ? "Wird ausgelöst…"
+                : isBuzzerActive
+                ? "Opa wird kontaktiert – antippen zum Stoppen"
                 : "Opa erinnern (Piepton)"}
             </button>
           )}
