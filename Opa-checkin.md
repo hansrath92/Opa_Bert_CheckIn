@@ -117,3 +117,6 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 | 2026-09-18 | Telefonnummer bleibt trotz Env-Variable im Client-Bundle sichtbar (wird aktiv in der UI gebraucht) – Fix entfernt sie nur aus dem Quellcode/Repo, nicht aus der laufenden App |
 | 2026-09-18 | Login-Modell auf Wunsch zurückgebaut: Namensauswahl + localStorage statt PIN-Session (bewährtes Muster aus einem früheren Projekt), PIN bleibt als gehashte Verwechslungs-Absicherung. Bewusster Sicherheits-Tradeoff gegenüber dem Vormittags-Umbau, akzeptiert für kleine vertrauensvolle Gruppe |
 | 2026-09-18 | Onboarding-Trigger von `AppPopups` (versionsbasiert) zu `IdentityGate` (direkt nach "Ich bin neu") verschoben – entspricht "beim allerersten App-Start einer neuen Person" präziser als der bisherige geräte-first-seen-Ansatz |
+| 2026-09-23 | Einstellungen nach Strava-Vorbild in klar beschriftete Gruppen umsortiert statt loser Kartenkette |
+| 2026-09-23 | Erste-Schritte-Einführung zum echten Spotlight-Rundgang ausgebaut (Seiten-Navigation + Element-Hervorhebung statt reinem Text-Popup) – bewusst die aufwendigere von zwei Optionen gewählt |
+| 2026-09-23 | Push-Status wird jetzt über den echten Browser-Abo-Status geprüft (`getPushSubscriptionStatus`), nicht mehr nur über einen State, der beim Neuladen verloren geht |

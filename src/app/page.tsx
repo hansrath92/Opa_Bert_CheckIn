@@ -179,9 +179,10 @@ export default function Home() {
         </p>
       ) : (
         <>
-          {/* Alarm-Zustand deutlich sichtbar: grün = alles gut, teal = Piepton läuft gerade
+          {/* Alarm-Zustand deutlich sichtbar: grün = alles gut, teal = Erinnerung läuft gerade
               bei Opa (noch keine Eskalation), orange = Eskalation läuft/wartet auf Rückmeldung */}
           <div
+            data-onboarding="status"
             className={`rounded-2xl p-4 text-center font-medium ${
               hasOpenIncident
                 ? "bg-warning/10 text-warning"
@@ -193,11 +194,11 @@ export default function Home() {
             {hasOpenIncident
               ? "Achtung: Meldung fehlt"
               : isBuzzerActive
-              ? "Opa wird kontaktiert"
+              ? "Opa wird erinnert"
               : "Alles in Ordnung"}
             {isBuzzerActive && !hasOpenIncident && buzzerActiveSince && (
               <div className="mt-1 text-xs font-normal opacity-80">
-                Piepton aktiv seit {getBerlinTimeLabel(buzzerActiveSince)} Uhr
+                Erinnerung aktiv seit {getBerlinTimeLabel(buzzerActiveSince)} Uhr
               </div>
             )}
           </div>
@@ -220,6 +221,7 @@ export default function Home() {
 
           {!evening && (
             <button
+              data-onboarding="remind"
               onClick={handleRemindOpa}
               disabled={reminderStatus === "sending"}
               className={`rounded-2xl p-4 text-center text-lg font-medium ${
@@ -230,8 +232,8 @@ export default function Home() {
               {reminderStatus === "sending"
                 ? "Wird ausgelöst…"
                 : isBuzzerActive
-                ? "Opa wird kontaktiert – antippen zum Stoppen"
-                : "Opa erinnern (Piepton)"}
+                ? "Opa wird erinnert – antippen zum Stoppen"
+                : "Opa erinnern"}
             </button>
           )}
 

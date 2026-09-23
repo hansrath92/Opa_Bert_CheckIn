@@ -105,7 +105,7 @@ export default function VerlaufPage() {
       ) : error ? (
         <p className="text-lg text-foreground-secondary">Laden fehlgeschlagen</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div data-onboarding="verlauf-list" className="flex flex-col gap-3">
           {days.map((day) => (
             <div key={day.dateKey} className="rounded-2xl border border-border bg-card p-4">
               <div className="mb-2 font-medium">{formatDateLabel(day.dateKey)}</div>

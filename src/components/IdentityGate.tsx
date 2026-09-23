@@ -3,14 +3,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import TabBar from "./TabBar";
 import AppPopups from "./AppPopups";
-import OnboardingModal from "./OnboardingModal";
+import OnboardingTour from "./OnboardingTour";
 
 export type Contact = { id: string; name: string; tolerance_hours: number };
 type PublicContact = { id: string; name: string; tolerance_hours: number };
 
 const STORAGE_KEY = "opa-checkin-contact";
 
-type ContactContextValue = { contact: Contact; updateContact: (c: Contact) => void };
+type ContactContextValue = {
+  contact: Contact;
+  updateContact: (c: Contact) => void;
+  startOnboarding: () => void;
+};
 const ContactContext = createContext<ContactContextValue | null>(null);
 
 // Von Seiten genutzt, die wissen müssen, wer gerade "eingeloggt" ist
@@ -30,7 +34,14 @@ export function useUpdateContact(): (c: Contact) => void {
   return ctx.updateContact;
 }
 
-type Stage = "loading" | "chooser" | "pick" | "pin" | "join" | "onboarding" | "ready";
+// Startet den Erste-Schritte-Rundgang manuell erneut (z.B. Button in Einstellungen).
+export function useStartOnboarding(): () => void {
+  const ctx = useContext(ContactContext);
+  if (!ctx) throw new Error("useStartOnboarding() muss innerhalb von IdentityGate genutzt werden");
+  return ctx.startOnboarding;
+}
+
+type Stage = "loading" | "chooser" | "pick" | "pin" | "join" | "ready";
 
 const inputClass = "rounded-xl border border-border bg-card p-2";
 const buttonClass = "rounded-full border border-border bg-card px-4 py-2 text-sm font-medium";
@@ -45,6 +56,7 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
   const [toleranceInput, setToleranceInput] = useState("2");
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [onboardingActive, setOnboardingActive] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -128,8 +140,9 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
         return;
       }
       saveContact(data.contact);
-      // Ganz neue Person -> immer die Einführung zeigen, bevor es weitergeht.
-      setStage("onboarding");
+      setStage("ready");
+      // Ganz neue Person -> Rundgang zeigen, sobald die Seite steht.
+      setOnboardingActive(true);
     } catch {
       setFormError("Verbindung fehlgeschlagen, bitte erneut versuchen");
     } finally {
@@ -141,16 +154,15 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
 
   if (stage === "ready" && contact) {
     return (
-      <ContactContext.Provider value={{ contact, updateContact: saveContact }}>
+      <ContactContext.Provider
+        value={{ contact, updateContact: saveContact, startOnboarding: () => setOnboardingActive(true) }}
+      >
         <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
         <TabBar />
         <AppPopups />
+        {onboardingActive && <OnboardingTour onClose={() => setOnboardingActive(false)} />}
       </ContactContext.Provider>
     );
-  }
-
-  if (stage === "onboarding") {
-    return <OnboardingModal onClose={() => setStage("ready")} />;
   }
 
   return (

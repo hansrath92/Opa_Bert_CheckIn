@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 – 2026-09-23
+- Einstellungen neu geordnet: klar beschriftete Gruppen statt Kartenkette
+- Benachrichtigungen zeigen jetzt den echten Status an, auch nach einem Neuladen
+- Erste-Schritte-Einführung ist jetzt ein echter Rundgang: navigiert durch die App und hebt das jeweilige Element hervor
+- Versionshistorie dauerhaft in Einstellungen einsehbar
+
 ## 0.5.0 – 2026-09-18
 - Login vereinfacht: Namensauswahl statt PIN-Anmeldung ("Ich bin schon dabei" / "Ich bin neu"), PIN nur noch optionale Verwechslungs-Absicherung auf neuen Geräten
 - Erste-Schritte-Einführung jetzt als geführter Mehrschritt-Flow (Weiter/Überspringen, Fortschrittsanzeige)

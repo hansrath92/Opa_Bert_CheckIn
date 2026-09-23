@@ -13,6 +13,20 @@ export function isPushSupported(): boolean {
   );
 }
 
+// Prüft den tatsächlichen Browser-Abo-Status, statt sich auf einen lokalen
+// State zu verlassen, der nach einem Neuladen der Seite verloren geht.
+export async function getPushSubscriptionStatus(): Promise<boolean> {
+  if (!isPushSupported()) return false;
+  try {
+    const registration = await navigator.serviceWorker.getRegistration("/sw.js");
+    if (!registration) return false;
+    const subscription = await registration.pushManager.getSubscription();
+    return subscription !== null;
+  } catch {
+    return false;
+  }
+}
+
 export async function subscribeToPush(contactId: string): Promise<void> {
   const registration = await navigator.serviceWorker.register("/sw.js");
 
