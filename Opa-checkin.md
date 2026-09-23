@@ -61,7 +61,7 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 ### Phase 0 – Setup (abgeschlossen)
 - [x] Projektname, Alarm-Regel-Prinzip, GitHub-Repo, Pi eingerichtet, Button verkabelt & getestet, Buzzer verkabelt & getestet
 
-### Phase 1 – MVP (aktuell)
+### Phase 1 – MVP (live seit 2026-09-23, Version 1.0.0)
 - [x] Supabase-Projekt aufsetzen (Tabellen: presses/daily_status, contacts) – 7 Migrationen (0001–0007)
 - [x] API-Route zum Empfangen der Button-Presses vom Pi (`/api/press`)
 - [x] API-Route + Logik für Buzzer-Status (`/api/buzzer-status` zum Lesen, `/api/buzzer-trigger` zum manuellen Auslösen)
@@ -75,6 +75,8 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 - [x] Live-Sichtbarkeit "Opa wird kontaktiert" auf Heute + Aktiv-Zeitspanne im Verlauf (2026-09-18)
 - [x] App-Icon "Roter Knopf auf Teal" (Favicon, Apple-Touch-Icon, PWA-Manifest-Icons) (2026-09-18)
 - [x] Opas Telefonnummer und Standort aus dem Quellcode in Env-Variablen ausgelagert (2026-09-18)
+- [x] Einstellungen aufgeräumt (gruppiert, zuklappbar), echter Spotlight-Rundgang, echter Push-Status, Abmelden-Funktion (2026-09-23)
+- [x] Version 1.0.0 – offiziell live (2026-09-23)
 
 ### Phase 2 – Ausbaustufen (später)
 - [ ] Prioritäts-/Eskalationsliste mit Abwesenheits-Schalter
@@ -118,3 +120,4 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 | 2026-09-23 | Einstellungen nach Strava-Vorbild in klar beschriftete Gruppen umsortiert statt loser Kartenkette |
 | 2026-09-23 | Erste-Schritte-Einführung zum echten Spotlight-Rundgang ausgebaut (Seiten-Navigation + Element-Hervorhebung statt reinem Text-Popup) – bewusst die aufwendigere von zwei Optionen gewählt |
 | 2026-09-23 | Push-Status wird jetzt über den echten Browser-Abo-Status geprüft (`getPushSubscriptionStatus`), nicht mehr nur über einen State, der beim Neuladen verloren geht |
+| 2026-09-23 | Version 1.0.0: Go-Live-Entscheidung – Phase 1/MVP gilt als abgeschlossen, App geht in den echten Familieneinsatz |

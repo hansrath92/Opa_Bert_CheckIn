@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.0 – 2026-09-23
+- Erste stabile Version: Opa-Checkin ist live
+
 ## 0.6.3 – 2026-09-23
 - Fix: Morgens/Abends auf "Heute" passen jetzt immer in eine Zeile, gleich große Karten
 
