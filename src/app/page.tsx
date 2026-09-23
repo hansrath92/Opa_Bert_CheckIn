@@ -23,13 +23,13 @@ type Incident = {
 function StatusCard({ label, press }: { label: string; press: Press | null }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
-      <span className="text-lg font-medium">{label}</span>
+      <span className="shrink-0 whitespace-nowrap text-lg font-medium">{label}</span>
       {press ? (
-        <span className="rounded-full bg-success-bg px-3 py-1 text-lg font-semibold text-success-text">
+        <span className="whitespace-nowrap rounded-full bg-success-bg px-3 py-1 text-lg font-semibold text-success-text">
           ✓ {getBerlinTimeLabel(new Date(press.created_at))} Uhr
         </span>
       ) : (
-        <span className="text-lg text-foreground-secondary">Noch nicht gemeldet</span>
+        <span className="whitespace-nowrap text-lg text-foreground-secondary">Noch nicht gemeldet</span>
       )}
     </div>
   );
@@ -204,8 +204,8 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <StatusCard label="Morgens (aufgestanden)" press={morning} />
-            <StatusCard label="Abends (Tür zu)" press={evening} />
+            <StatusCard label="Morgens" press={morning} />
+            <StatusCard label="Abends" press={evening} />
           </div>
 
           <a
