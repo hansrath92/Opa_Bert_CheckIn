@@ -92,11 +92,9 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 
 ## 8a. Was sonst noch ansteht
 
-- **Blockiert auf Rückmeldung vom Pi:** Heartbeat und Buzzer-Polling funktionieren auf dem echten Pi noch nicht (Diagnose per `journalctl -u opa-checkin` ausstehend)
-- **Vor Public-Schalten des Repos:** Rate-Limiting für `/api/contacts/login` + `/api/contacts/register` (4-stellige PIN, aktuell ohne Bremse)
+- **Erledigt:** Heartbeat und Buzzer-Polling laufen auf dem echten Pi (Fix vom 18.9., seither auf Hardware bestätigt); Logout-Funktion (23.9.)
+- **Vor Public-Schalten des Repos:** Rate-Limiting für `/api/contacts/confirm-pin` + `/api/contacts/register` (4-stellige PIN, aktuell ohne Bremse)
 - **Hardware/Deployment:** Pi-Umzug von Test-WLAN zu Opas Wohnung
-- **Technisch:** `SESSION_SECRET`, `NEXT_PUBLIC_OPA_PHONE_NUMBER`, `OPA_LAT`, `OPA_LNG` in Vercel-Projekt-Envs setzen (Voraussetzung für Login bzw. Telefon-Anzeige/Sonnenuntergangs-Berechnung in Produktion)
-- **Später möglich:** Logout-Funktion (aktuell nicht vorgesehen, Session hält ~1 Jahr)
 
 ## 9. Technische Entscheidungen (Log)
 | Datum | Entscheidung |

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getPushSubscriptionStatus, subscribeToPush } from "@/lib/push";
 import { CHANGELOG } from "@/lib/changelog";
-import { useContact, useStartOnboarding, useUpdateContact } from "@/components/IdentityGate";
+import { useContact, useLogout, useStartOnboarding, useUpdateContact } from "@/components/IdentityGate";
 
 // Gemeinsame Bausteine für eine Strava-artige, gruppierte Einstellungs-Ansicht:
 // jede Gruppe ist standardmäßig zugeklappt, zeigt aber schon im zugeklappten
@@ -40,6 +40,7 @@ function CollapsibleSection({
 function KontaktUndAlarmBereich() {
   const contact = useContact();
   const updateContact = useUpdateContact();
+  const logout = useLogout();
   const [toleranceInput, setToleranceInput] = useState(String(contact.tolerance_hours));
   const [formError, setFormError] = useState<string | null>(null);
   const [pushStatus, setPushStatus] = useState<"idle" | "active" | "subscribing" | "error">("idle");
@@ -134,7 +135,12 @@ function KontaktUndAlarmBereich() {
 
   return (
     <div className="flex flex-col gap-5">
-      <p className="px-1 text-sm text-foreground-secondary">Angemeldet als {contact.name}</p>
+      <div className="flex items-center justify-between gap-4 px-1">
+        <p className="text-sm text-foreground-secondary">Angemeldet als {contact.name}</p>
+        <button onClick={logout} className="text-sm text-foreground-secondary underline">
+          Abmelden
+        </button>
+      </div>
 
       {/* Steht IMMER offen, unabhängig vom Zuklapp-Prinzip - eine ausstehende
           Rückmeldung ist dringend und darf nicht versteckt sein. */}

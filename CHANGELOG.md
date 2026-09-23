@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.6.2 – 2026-09-23
+- Neu: Abmelden-Button in Einstellungen
+
 ## 0.6.1 – 2026-09-23
 - Einstellungs-Gruppen sind jetzt zugeklappt, mit Status auf einen Blick (z.B. "Aktiv"), volle Details erst nach Antippen
 

@@ -14,6 +14,7 @@ type ContactContextValue = {
   contact: Contact;
   updateContact: (c: Contact) => void;
   startOnboarding: () => void;
+  logout: () => void;
 };
 const ContactContext = createContext<ContactContextValue | null>(null);
 
@@ -39,6 +40,14 @@ export function useStartOnboarding(): () => void {
   const ctx = useContext(ContactContext);
   if (!ctx) throw new Error("useStartOnboarding() muss innerhalb von IdentityGate genutzt werden");
   return ctx.startOnboarding;
+}
+
+// Meldet den aktuellen Kontakt ab (localStorage löschen, zurück zur
+// Namensauswahl) - z.B. Button in Einstellungen.
+export function useLogout(): () => void {
+  const ctx = useContext(ContactContext);
+  if (!ctx) throw new Error("useLogout() muss innerhalb von IdentityGate genutzt werden");
+  return ctx.logout;
 }
 
 type Stage = "loading" | "chooser" | "pick" | "pin" | "join" | "ready";
@@ -71,6 +80,14 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
   function saveContact(c: Contact) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(c));
     setContact(c);
+  }
+
+  function logout() {
+    localStorage.removeItem(STORAGE_KEY);
+    setContact(null);
+    setPin("");
+    setFormError(null);
+    setStage("chooser");
   }
 
   async function safeJson(response: Response): Promise<{ error?: string; contact?: Contact }> {
@@ -155,7 +172,7 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
   if (stage === "ready" && contact) {
     return (
       <ContactContext.Provider
-        value={{ contact, updateContact: saveContact, startOnboarding: () => setOnboardingActive(true) }}
+        value={{ contact, updateContact: saveContact, startOnboarding: () => setOnboardingActive(true), logout }}
       >
         <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
         <TabBar />
