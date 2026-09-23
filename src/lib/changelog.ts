@@ -7,6 +7,13 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.1",
+    date: "2026-09-23",
+    changes: [
+      "Einstellungs-Gruppen sind jetzt zugeklappt, mit Status auf einen Blick, volle Details erst nach Antippen",
+    ],
+  },
+  {
     version: "0.6.0",
     date: "2026-09-23",
     changes: [

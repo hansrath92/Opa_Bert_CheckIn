@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.6.1 – 2026-09-23
+- Einstellungs-Gruppen sind jetzt zugeklappt, mit Status auf einen Blick (z.B. "Aktiv"), volle Details erst nach Antippen
+
 ## 0.6.0 – 2026-09-23
 - Einstellungen neu geordnet: klar beschriftete Gruppen statt Kartenkette
 - Benachrichtigungen zeigen jetzt den echten Status an, auch nach einem Neuladen
