@@ -7,6 +7,11 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.2.0",
+    date: "2026-09-25",
+    changes: ["Neues App-Icon: Puls-Signal (konzentrische Ringe) statt roter Knopf – minimalistischer, stilvoller"],
+  },
+  {
     version: "1.1.1",
     date: "2026-09-25",
     changes: [

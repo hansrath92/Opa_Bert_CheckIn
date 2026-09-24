@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.0 – 2026-09-25
+- Neues App-Icon: "Puls-Signal" (konzentrische Ringe) statt "Roter Knopf" – minimalistischer, stilvoller
+
 ## 1.1.1 – 2026-09-25
 - Fix: Piepton löste zwischen 0 und 2 Uhr nachts fälschlich sofort aus (Sonnenuntergangs-Berechnung nutzte das falsche Kalenderdatum kurz nach Mitternacht)
 

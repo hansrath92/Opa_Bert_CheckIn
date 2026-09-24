@@ -73,7 +73,7 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 - [x] Sicherheitsfix (2026-09-18): dashboard-weites Login per Session-Cookie statt der bisherigen ungeprüften Contact-ID; Erinnerungs-Historie (wer hat wann "Opa erinnern" gedrückt) im Verlauf-Tab
 - [x] Onboarding "Erste-Schritte-Einführung" beim ersten Login, über Einstellungen jederzeit erneut aufrufbar (2026-09-18)
 - [x] Live-Sichtbarkeit "Opa wird kontaktiert" auf Heute + Aktiv-Zeitspanne im Verlauf (2026-09-18)
-- [x] App-Icon "Roter Knopf auf Teal" (Favicon, Apple-Touch-Icon, PWA-Manifest-Icons) (2026-09-18)
+- [x] App-Icon (Favicon, Apple-Touch-Icon, PWA-Manifest-Icons), ursprünglich "Roter Knopf auf Teal" (18.9.), auf Wunsch zu "Puls-Signal" (konzentrische Ringe + Punkt, minimalistischer) überarbeitet (25.9.)
 - [x] Opas Telefonnummer und Standort aus dem Quellcode in Env-Variablen ausgelagert (2026-09-18)
 - [x] Einstellungen aufgeräumt (gruppiert, zuklappbar), echter Spotlight-Rundgang, echter Push-Status, Abmelden-Funktion (2026-09-23)
 - [x] Version 1.0.0 – offiziell live (2026-09-23)
@@ -121,3 +121,6 @@ Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufst
 | 2026-09-23 | Erste-Schritte-Einführung zum echten Spotlight-Rundgang ausgebaut (Seiten-Navigation + Element-Hervorhebung statt reinem Text-Popup) – bewusst die aufwendigere von zwei Optionen gewählt |
 | 2026-09-23 | Push-Status wird jetzt über den echten Browser-Abo-Status geprüft (`getPushSubscriptionStatus`), nicht mehr nur über einen State, der beim Neuladen verloren geht |
 | 2026-09-23 | Version 1.0.0: Go-Live-Entscheidung – Phase 1/MVP gilt als abgeschlossen, App geht in den echten Familieneinsatz |
+| 2026-09-24 | Verlauf zeigt jetzt alle Knopfdrücke eines Tages (nicht nur den letzten) – wichtig geworden beim Testen auf dem neuen Pi4 |
+| 2026-09-25 | Bug gefunden & gefixt: `getSunsetTimeUTC` nutzte UTC- statt Berlin-Kalenderdatum, löste den Piepton zwischen 0–2 Uhr nachts fälschlich sofort nach Mitternacht aus |
+| 2026-09-25 | App-Icon auf Wunsch von "Roter Knopf" zu "Puls-Signal" (konzentrische Ringe) überarbeitet – abstrakter, minimalistischer, Rot komplett entfernt zugunsten von reinem Teal+Weiß |
