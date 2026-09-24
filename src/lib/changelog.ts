@@ -7,6 +7,13 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.1",
+    date: "2026-09-25",
+    changes: [
+      "Fix: Piepton löste zwischen 0 und 2 Uhr nachts fälschlich sofort aus (falsches Kalenderdatum kurz nach Mitternacht bei der Sonnenuntergangs-Berechnung)",
+    ],
+  },
+  {
     version: "1.1.0",
     date: "2026-09-24",
     changes: ["Verlauf zeigt jetzt alle Knopfdrücke eines Tages an, nicht nur den letzten"],

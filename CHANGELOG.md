@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.1 – 2026-09-25
+- Fix: Piepton löste zwischen 0 und 2 Uhr nachts fälschlich sofort aus (Sonnenuntergangs-Berechnung nutzte das falsche Kalenderdatum kurz nach Mitternacht)
+
 ## 1.1.0 – 2026-09-24
 - Verlauf zeigt jetzt alle Knopfdrücke eines Tages an, nicht nur den letzten
 
