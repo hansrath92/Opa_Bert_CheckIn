@@ -169,19 +169,20 @@ sudo systemctl restart opa-checkin.service
 
 ## 7. Manuelle Testskripte
 
-Diese liegen im Ordner `~/opa-checkin/` und sind nur zum Ausprobieren gedacht (laufen NICHT automatisch, nur wenn ihr sie startet):
+Sind zum Ausprobieren gedacht (laufen NICHT automatisch, nur wenn ihr sie startet):
 
 ```bash
+python3 ~/opa-checkin/pi/test_buzzer.py       # Einfacher Piepton-Test (im Repo, Abschnitt "Backend direkt testen" unten)
 python3 ~/opa-checkin/test_button.py          # Button-Erkennung testen
-python3 ~/opa-checkin/test_buzzer.py          # Einfacher Piepton-Test
 python3 ~/opa-checkin/test_buzzer_scan.py     # 10 Frequenzen durchtesten
 python3 ~/opa-checkin/test_buzzer_volume.py   # 10 Lautstärken durchtesten
 ```
 Beenden mit **Strg+C**.
 
-> Hinweis: Diese Testskripte sind nicht Teil des Git-Repos (nur lokal auf dem
-> jeweiligen Pi). Nach einem Pi-Wechsel müsst ihr sie neu anlegen, falls ihr
-> sie wieder braucht.
+> Hinweis: `test_buzzer.py` ist seit 24.9. Teil des Git-Repos (`pi/test_buzzer.py`),
+> damit es beim nächsten Pi-Wechsel nicht wieder verloren geht - die anderen drei
+> (`test_button.py`, `test_buzzer_scan.py`, `test_buzzer_volume.py`) waren nur
+> lokal auf dem alten Pi3 und müssten bei Bedarf neu geschrieben werden.
 
 ---
 
