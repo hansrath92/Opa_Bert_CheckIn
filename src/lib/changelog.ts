@@ -7,6 +7,13 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.3.0",
+    date: "2026-09-25",
+    changes: [
+      "Neu: Heute zeigt jetzt die Erinnerungszeiten aller Familienmitglieder für den Abend (Sonnenuntergang + eigene Toleranz-Stunden)",
+    ],
+  },
+  {
     version: "1.2.0",
     date: "2026-09-25",
     changes: ["Neues App-Icon: Puls-Signal (konzentrische Ringe) statt roter Knopf – minimalistischer, stilvoller"],

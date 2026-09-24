@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.3.0 – 2026-09-25
+- Neu: "Heute" zeigt jetzt die Erinnerungszeiten aller Familienmitglieder für den Abend (Sonnenuntergang + eigene Toleranz-Stunden)
+
 ## 1.2.0 – 2026-09-25
 - Neues App-Icon: "Puls-Signal" (konzentrische Ringe) statt "Roter Knopf" – minimalistischer, stilvoller
 
