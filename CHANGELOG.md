@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.0 – 2026-09-24
+- Verlauf zeigt jetzt alle Knopfdrücke eines Tages an, nicht nur den letzten
+
 ## 1.0.0 – 2026-09-23
 - Erste stabile Version: Opa-Checkin ist live
 

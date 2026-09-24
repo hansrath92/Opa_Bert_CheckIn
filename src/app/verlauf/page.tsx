@@ -8,8 +8,8 @@ type Reminder = { contact_name: string; created_at: string };
 type DailyStatus = { date_key: string; auto_triggered_at: string | null; evening_press_time: string | null };
 type DayEntry = {
   dateKey: string;
-  morning: Press | null;
-  evening: Press | null;
+  morning: Press[];
+  evening: Press[];
   reminders: Reminder[];
   buzzerActiveSince: Date | null;
   buzzerActiveUntil: Date | null;
@@ -76,12 +76,18 @@ export default function VerlaufPage() {
             activeSinceCandidates.push(new Date(dayReminders[0].created_at).getTime());
           }
 
+          // Alle Drücke des Tages, nicht nur der letzte - falls Opa mehrmals
+          // drückt, sollen alle Zeitpunkte sichtbar sein.
+          const sortByTime = (a: Press, b: Press) => a.created_at.localeCompare(b.created_at);
+
           return {
             dateKey,
-            morning:
-              presses.find((r) => r.type === "morning" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
-            evening:
-              presses.find((r) => r.type === "evening" && getBerlinDateKey(new Date(r.created_at)) === dateKey) ?? null,
+            morning: presses
+              .filter((r) => r.type === "morning" && getBerlinDateKey(new Date(r.created_at)) === dateKey)
+              .sort(sortByTime),
+            evening: presses
+              .filter((r) => r.type === "evening" && getBerlinDateKey(new Date(r.created_at)) === dateKey)
+              .sort(sortByTime),
             reminders: dayReminders,
             buzzerActiveSince:
               activeSinceCandidates.length > 0 ? new Date(Math.min(...activeSinceCandidates)) : null,
@@ -112,9 +118,13 @@ export default function VerlaufPage() {
               <div className="flex gap-4 text-sm">
                 <div className="flex-1">
                   <div className="text-foreground-secondary">Morgens</div>
-                  {day.morning ? (
-                    <div className="font-semibold text-success-text">
-                      ✓ {getBerlinTimeLabel(new Date(day.morning.created_at))} Uhr
+                  {day.morning.length > 0 ? (
+                    <div className="flex flex-col gap-0.5">
+                      {day.morning.map((press, i) => (
+                        <div key={i} className="font-semibold text-success-text">
+                          ✓ {getBerlinTimeLabel(new Date(press.created_at))} Uhr
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-foreground-secondary">–</div>
@@ -122,9 +132,13 @@ export default function VerlaufPage() {
                 </div>
                 <div className="flex-1">
                   <div className="text-foreground-secondary">Abends</div>
-                  {day.evening ? (
-                    <div className="font-semibold text-success-text">
-                      ✓ {getBerlinTimeLabel(new Date(day.evening.created_at))} Uhr
+                  {day.evening.length > 0 ? (
+                    <div className="flex flex-col gap-0.5">
+                      {day.evening.map((press, i) => (
+                        <div key={i} className="font-semibold text-success-text">
+                          ✓ {getBerlinTimeLabel(new Date(press.created_at))} Uhr
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-foreground-secondary">–</div>
