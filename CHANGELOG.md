@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.5.2 – 2026-09-25
+- Knopf reagiert jetzt ohne Verzögerung, auch kurzes Antippen wird erkannt
+
 ## 1.5.1 – 2026-09-25
 - Ding-Dong kommt jetzt sofort beim Knopfdruck statt erst nach der Server-Antwort
 

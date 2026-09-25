@@ -16,6 +16,18 @@ BUZZER_PIN = 27  # Physischer Pin 13, GND auf Pin 14 (passiver Piezo)
 
 RETRY_DELAYS_SECONDS = [2, 5, 10, 20]  # bei kurzen WLAN-Aussetzern erneut versuchen
 
+# Entprellung in zwei Stufen:
+# - BUTTON_DEBOUNCE_MS geht an die GPIO-Bibliothek. Achtung: rpi-lgpio meldet
+#   einen Druck erst, wenn das Signal so lange STABIL war - der Wert verzögert
+#   also jeden Druck um genau diese Zeit. Deshalb bewusst klein (vorher 800 ms,
+#   das war als Verzögerung hörbar und hat kurzes Antippen evtl. verschluckt).
+# - PRESS_LOCKOUT_SECONDS ist unsere eigene Sperre im Skript: Weitere Drücke
+#   innerhalb dieser Zeit werden ignoriert (kein Ton, nichts gesendet), damit
+#   kein Doppel-Eintrag in der App entsteht.
+BUTTON_DEBOUNCE_MS = 100
+PRESS_LOCKOUT_SECONDS = 2.0
+last_press_at = 0.0  # Zeitpunkt (time.monotonic) des letzten gezählten Drucks
+
 # Leitet sich aus API_URL ab (z.B. ".../api/press" -> ".../api/heartbeat"),
 # damit nur eine URL in der .env gepflegt werden muss.
 HEARTBEAT_URL = API_URL.replace("/api/press", "/api/heartbeat")
@@ -67,6 +79,13 @@ def send_press():
 
 
 def on_button_pressed(channel):
+    global last_press_at
+    now = time.monotonic()
+    if now - last_press_at < PRESS_LOCKOUT_SECONDS:
+        logging.info("Knopfdruck ignoriert (weniger als %s s nach dem letzten).", PRESS_LOCKOUT_SECONDS)
+        return
+    last_press_at = now
+
     # Ding-Dong SOFORT beim Drücken, damit Opa ohne Verzögerung hört, dass der
     # Knopf reagiert hat. Bewusst nicht erst nach der Server-Antwort (die kann
     # 1-2 Sekunden dauern). Läuft in einem eigenen Thread, damit das Senden
@@ -198,7 +217,7 @@ def main():
     GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     # Taster verbindet GPIO17 mit GND -> Signal fällt beim Drücken von HIGH auf LOW
     GPIO.add_event_detect(
-        BUTTON_PIN, GPIO.FALLING, callback=on_button_pressed, bouncetime=800
+        BUTTON_PIN, GPIO.FALLING, callback=on_button_pressed, bouncetime=BUTTON_DEBOUNCE_MS
     )
 
     # Läuft nebenbei im Hintergrund, damit der Heartbeat nicht von echten
