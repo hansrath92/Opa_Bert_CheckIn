@@ -7,6 +7,11 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.5.1",
+    date: "2026-09-25",
+    changes: ["Ding-Dong kommt jetzt sofort beim Knopfdruck statt erst nach der Server-Antwort"],
+  },
+  {
     version: "1.5.0",
     date: "2026-09-25",
     changes: ["Neu: Knopf spielt nach erfolgreichem Druck ein kurzes Ding-Dong als Bestätigung für Opa"],

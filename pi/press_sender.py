@@ -29,7 +29,7 @@ BUZZER_DUTY_CYCLE_PERCENT = 30  # entspricht "Tastverhältnis/Lautstärke 0,3"
 BEEP_DURATION_SECONDS = 0.15
 BEEP_GAP_SECONDS = 0.15
 
-# Bestätigungston nach erfolgreichem Knopfdruck: aufsteigendes "Ding-Dong"
+# Bestätigungston direkt beim Knopfdruck: aufsteigendes "Ding-Dong"
 # (tief -> hoch). Klingt bewusst anders als der Erinnerungs-Doppelpiep
 # (zweimal gleich hoch), damit Opa beides auseinanderhalten kann.
 CONFIRM_TONES = [(1500, 0.12), (2500, 0.30)]  # (Frequenz in Hz, Dauer in Sekunden)
@@ -55,9 +55,6 @@ def send_press():
             )
             response.raise_for_status()
             logging.info("Knopfdruck gesendet: %s", response.json())
-            # Erst NACH der Server-Bestätigung piepen - der Ton heißt also
-            # wirklich "ist angekommen", nicht nur "Knopf wurde gedrückt".
-            confirm_beep()
             return
         except requests.RequestException as error:
             logging.error(
@@ -70,6 +67,11 @@ def send_press():
 
 
 def on_button_pressed(channel):
+    # Ding-Dong SOFORT beim Drücken, damit Opa ohne Verzögerung hört, dass der
+    # Knopf reagiert hat. Bewusst nicht erst nach der Server-Antwort (die kann
+    # 1-2 Sekunden dauern). Läuft in einem eigenen Thread, damit das Senden
+    # nicht auf das Ende des Tons warten muss.
+    threading.Thread(target=confirm_beep, daemon=True).start()
     send_press()
 
 
@@ -100,7 +102,7 @@ def double_beep(pwm):
 
 
 def confirm_beep():
-    # Kurzes "Ding-Dong" als Rückmeldung für Opa: Knopfdruck ist angekommen.
+    # Kurzes "Ding-Dong" als Rückmeldung für Opa: Knopf hat reagiert.
     if buzzer_pwm is None:
         # Buzzer konnte beim Start nicht initialisiert werden -> still weiter,
         # der Knopfdruck selbst ist ja trotzdem erfolgreich gesendet.

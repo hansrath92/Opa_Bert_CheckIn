@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.5.1 – 2026-09-25
+- Ding-Dong kommt jetzt sofort beim Knopfdruck statt erst nach der Server-Antwort
+
 ## 1.5.0 – 2026-09-25
 - Neu: Knopf spielt nach erfolgreichem Druck ein kurzes "Ding-Dong" als Bestätigung für Opa
 
