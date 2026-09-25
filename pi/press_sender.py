@@ -19,12 +19,13 @@ RETRY_DELAYS_SECONDS = [2, 5, 10, 20]  # bei kurzen WLAN-Aussetzern erneut versu
 # Entprellung in zwei Stufen:
 # - BUTTON_DEBOUNCE_MS geht an die GPIO-Bibliothek. Achtung: rpi-lgpio meldet
 #   einen Druck erst, wenn das Signal so lange STABIL war - der Wert verzögert
-#   also jeden Druck um genau diese Zeit. Deshalb bewusst klein (vorher 800 ms,
-#   das war als Verzögerung hörbar und hat kurzes Antippen evtl. verschluckt).
+#   also jeden Druck um genau diese Zeit. 800 ms waren als Verzögerung hörbar,
+#   100 ms haben Störsignale durchgelassen (Fehlauslösungen ohne Druck).
+#   250 ms ist der Kompromiss: filtert kurze Störungen, reagiert noch zügig.
 # - PRESS_LOCKOUT_SECONDS ist unsere eigene Sperre im Skript: Weitere Drücke
 #   innerhalb dieser Zeit werden ignoriert (kein Ton, nichts gesendet), damit
 #   kein Doppel-Eintrag in der App entsteht.
-BUTTON_DEBOUNCE_MS = 100
+BUTTON_DEBOUNCE_MS = 250
 PRESS_LOCKOUT_SECONDS = 2.0
 last_press_at = 0.0  # Zeitpunkt (time.monotonic) des letzten gezählten Drucks
 

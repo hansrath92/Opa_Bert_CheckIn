@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.5.3 – 2026-09-26
+- Fix: Knopf löste gelegentlich ohne Druck aus (Entprellzeit auf 250 ms erhöht)
+
 ## 1.5.2 – 2026-09-25
 - Knopf reagiert jetzt ohne Verzögerung, auch kurzes Antippen wird erkannt
 
