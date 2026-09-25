@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0 – 2026-09-25
+- Neu: Vercel Analytics aktiviert, um Nutzung (wer/wann/wo) nachvollziehen zu können
+- Erinnerungszeiten der Familie sind jetzt in Einstellungen zu finden statt auf "Heute"
+
 ## 1.3.0 – 2026-09-25
 - Neu: "Heute" zeigt jetzt die Erinnerungszeiten aller Familienmitglieder für den Abend (Sonnenuntergang + eigene Toleranz-Stunden)
 

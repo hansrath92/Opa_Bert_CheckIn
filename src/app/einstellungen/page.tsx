@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getPushSubscriptionStatus, subscribeToPush } from "@/lib/push";
+import { getBerlinTimeLabel } from "@/lib/press";
 import { CHANGELOG } from "@/lib/changelog";
 import { useContact, useLogout, useStartOnboarding, useUpdateContact } from "@/components/IdentityGate";
 
@@ -229,6 +230,44 @@ function KontaktUndAlarmBereich() {
   );
 }
 
+type ScheduleEntry = { name: string; tolerance_hours: number; deadline: string };
+
+function ErinnerungszeitenHeuteBereich() {
+  const [schedule, setSchedule] = useState<ScheduleEntry[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/reminder-schedule")
+      .then((response) => response.json())
+      .then((data) => setSchedule(data.schedule ?? []))
+      .catch(() => setSchedule([]));
+  }, []);
+
+  return (
+    <CollapsibleSection title="Erinnerungszeiten heute">
+      {schedule === null ? (
+        <div className="p-4 text-sm text-foreground-secondary">Lade…</div>
+      ) : schedule.length === 0 ? (
+        <div className="p-4 text-sm text-foreground-secondary">Keine Daten verfügbar.</div>
+      ) : (
+        <>
+          {schedule.map((entry) => (
+            <div key={entry.name} className="flex items-center justify-between gap-4 p-4">
+              <span className="text-sm font-medium">{entry.name}</span>
+              <span className="text-sm text-foreground-secondary">
+                {getBerlinTimeLabel(new Date(entry.deadline))} Uhr
+              </span>
+            </div>
+          ))}
+          <p className="p-4 text-xs text-foreground-secondary">
+            Sonnenuntergang + eigene Toleranz-Stunden. Nur die erste Person in der Liste hat diese Uhrzeit
+            garantiert - danach hängt es davon ab, wie schnell die Eskalation bei ihr ankommt.
+          </p>
+        </>
+      )}
+    </CollapsibleSection>
+  );
+}
+
 type PublicContact = { name: string; tolerance_hours: number };
 
 function FamilieBereich() {
@@ -319,6 +358,7 @@ export default function EinstellungenPage() {
     <main className="flex flex-1 flex-col gap-4 px-6 py-6">
       <h1 className="text-2xl font-semibold">Einstellungen</h1>
       <KontaktUndAlarmBereich />
+      <ErinnerungszeitenHeuteBereich />
       <FamilieBereich />
       <SoFunktioniertsBereich />
       <ErsteSchritteUndVersionBereich />

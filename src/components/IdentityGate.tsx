@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { track } from "@vercel/analytics";
 import TabBar from "./TabBar";
 import AppPopups from "./AppPopups";
 import OnboardingTour from "./OnboardingTour";
@@ -76,6 +77,18 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
       setStage("chooser");
     }
   }, []);
+
+  // Einmal pro App-Aufruf ein benanntes Event senden, damit im Vercel-
+  // Dashboard sichtbar ist, wer (Name) die App wann genutzt hat - kombiniert
+  // mit den automatischen Pageview-Daten (Zeit, Land) von <Analytics />.
+  useEffect(() => {
+    if (stage === "ready" && contact) {
+      track("besuch", { name: contact.name });
+    }
+    // Nur bei Stage-Wechsel bzw. Kontakt-Wechsel (Login/Wechsel), nicht bei
+    // jeder Detail-Änderung (z.B. Toleranz-Stunden speichern) erneut senden.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, contact?.id]);
 
   function saveContact(c: Contact) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(c));

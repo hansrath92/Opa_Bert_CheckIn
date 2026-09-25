@@ -20,8 +20,6 @@ type Incident = {
   contactName: string | null;
 };
 
-type ScheduleEntry = { name: string; tolerance_hours: number; deadline: string };
-
 function StatusCard({ label, press }: { label: string; press: Press | null }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
@@ -49,7 +47,6 @@ export default function Home() {
   const [reminderStatus, setReminderStatus] = useState<"idle" | "sending">("idle");
   const [buzzerActiveSince, setBuzzerActiveSince] = useState<Date | null>(null);
   const [metOpaStatus, setMetOpaStatus] = useState<"idle" | "sending" | "sent">("idle");
-  const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,16 +101,6 @@ export default function Home() {
         }
       } catch {
         // Live-Status ist informativ, ein Fehler hier blockiert die Hauptanzeige nicht
-      }
-
-      try {
-        const scheduleResponse = await fetch("/api/reminder-schedule");
-        if (scheduleResponse.ok) {
-          const { schedule: scheduleData } = await scheduleResponse.json();
-          setSchedule(scheduleData ?? []);
-        }
-      } catch {
-        // Erinnerungszeiten sind informativ, ein Fehler hier blockiert die Hauptanzeige nicht
       }
     }
 
@@ -220,24 +207,6 @@ export default function Home() {
             <StatusCard label="Morgens" press={morning} />
             <StatusCard label="Abends" press={evening} />
           </div>
-
-          {!evening && schedule.length > 0 && (
-            <div className="rounded-2xl border border-border bg-card p-4 text-sm">
-              <div className="mb-2 font-medium">Erinnerungszeiten heute</div>
-              <div className="flex flex-col gap-1">
-                {schedule.map((entry) => (
-                  <div key={entry.name} className="flex items-center justify-between text-foreground-secondary">
-                    <span>{entry.name}</span>
-                    <span>{getBerlinTimeLabel(new Date(entry.deadline))} Uhr</span>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-2 text-xs text-foreground-secondary">
-                Sonnenuntergang + eigene Toleranz-Stunden. Nur die erste Person in der Liste hat diese Uhrzeit
-                garantiert - danach hängt es davon ab, wie schnell die Eskalation bei ihr ankommt.
-              </p>
-            </div>
-          )}
 
           <a
             href={`tel:${OPA_PHONE_NUMBER}`}

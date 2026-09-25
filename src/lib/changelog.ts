@@ -7,6 +7,14 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.4.0",
+    date: "2026-09-25",
+    changes: [
+      "Neu: Vercel Analytics aktiviert, um Nutzung (wer/wann/wo) nachvollziehen zu können",
+      "Erinnerungszeiten der Familie sind jetzt in Einstellungen zu finden statt auf Heute",
+    ],
+  },
+  {
     version: "1.3.0",
     date: "2026-09-25",
     changes: [
