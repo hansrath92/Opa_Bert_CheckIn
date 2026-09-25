@@ -29,6 +29,18 @@ BUZZER_DUTY_CYCLE_PERCENT = 30  # entspricht "Tastverhältnis/Lautstärke 0,3"
 BEEP_DURATION_SECONDS = 0.15
 BEEP_GAP_SECONDS = 0.15
 
+# Bestätigungston nach erfolgreichem Knopfdruck: aufsteigendes "Ding-Dong"
+# (tief -> hoch). Klingt bewusst anders als der Erinnerungs-Doppelpiep
+# (zweimal gleich hoch), damit Opa beides auseinanderhalten kann.
+CONFIRM_TONES = [(1500, 0.12), (2500, 0.30)]  # (Frequenz in Hz, Dauer in Sekunden)
+CONFIRM_GAP_SECONDS = 0.05
+
+# Der Piezo wird von zwei Threads benutzt (Erinnerung + Bestätigung). Das
+# PWM-Objekt wird deshalb nur EINMAL angelegt und hier geteilt; das Lock sorgt
+# dafür, dass nie zwei Töne gleichzeitig durcheinander gespielt werden.
+buzzer_pwm = None
+buzzer_lock = threading.Lock()
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
 
@@ -43,6 +55,9 @@ def send_press():
             )
             response.raise_for_status()
             logging.info("Knopfdruck gesendet: %s", response.json())
+            # Erst NACH der Server-Bestätigung piepen - der Ton heißt also
+            # wirklich "ist angekommen", nicht nur "Knopf wurde gedrückt".
+            confirm_beep()
             return
         except requests.RequestException as error:
             logging.error(
@@ -72,36 +87,67 @@ def heartbeat_loop():
 
 
 def double_beep(pwm):
-    pwm.start(BUZZER_DUTY_CYCLE_PERCENT)
-    time.sleep(BEEP_DURATION_SECONDS)
-    pwm.stop()
-    time.sleep(BEEP_GAP_SECONDS)
-    pwm.start(BUZZER_DUTY_CYCLE_PERCENT)
-    time.sleep(BEEP_DURATION_SECONDS)
-    pwm.stop()
+    with buzzer_lock:
+        # Frequenz explizit setzen, weil confirm_beep() sie zwischendurch ändert.
+        pwm.ChangeFrequency(BUZZER_FREQUENCY_HZ)
+        pwm.start(BUZZER_DUTY_CYCLE_PERCENT)
+        time.sleep(BEEP_DURATION_SECONDS)
+        pwm.stop()
+        time.sleep(BEEP_GAP_SECONDS)
+        pwm.start(BUZZER_DUTY_CYCLE_PERCENT)
+        time.sleep(BEEP_DURATION_SECONDS)
+        pwm.stop()
 
 
-def buzzer_loop():
-    # Log-Zeile als Allererstes, noch vor jeder GPIO-Berührung: falls der Thread
-    # künftig wieder verschwindet, zeigt uns das, ob er überhaupt gestartet ist.
-    logging.info("Buzzer-Thread gestartet, initialisiere GPIO%s ...", BUZZER_PIN)
+def confirm_beep():
+    # Kurzes "Ding-Dong" als Rückmeldung für Opa: Knopfdruck ist angekommen.
+    if buzzer_pwm is None:
+        # Buzzer konnte beim Start nicht initialisiert werden -> still weiter,
+        # der Knopfdruck selbst ist ja trotzdem erfolgreich gesendet.
+        return
+    try:
+        with buzzer_lock:
+            for index, (frequency, duration) in enumerate(CONFIRM_TONES):
+                if index > 0:
+                    time.sleep(CONFIRM_GAP_SECONDS)
+                buzzer_pwm.ChangeFrequency(frequency)
+                buzzer_pwm.start(BUZZER_DUTY_CYCLE_PERCENT)
+                time.sleep(duration)
+                buzzer_pwm.stop()
+            # Zurück auf die Standardfrequenz für den Erinnerungs-Piep.
+            buzzer_pwm.ChangeFrequency(BUZZER_FREQUENCY_HZ)
+    except Exception:
+        # Ein Fehler beim Piepen darf das Senden nie beeinträchtigen.
+        logging.exception("Bestätigungston konnte nicht abgespielt werden.")
 
-    # GPIO.setup/GPIO.PWM liefen bisher AUSSERHALB des try/except weiter unten.
-    # Wenn hier etwas schiefgeht (z.B. eine zu alte rpi-lgpio-Version ohne
-    # PWM-Unterstuetzung), stirbt der Thread lautlos, noch bevor die erste
-    # logging-Zeile im try/except erreicht wird - das erklaert, warum bisher
-    # weder Erfolgs- noch Fehler-Logs auftauchten.
+
+def init_buzzer():
+    # Legt das gemeinsame PWM-Objekt für den Piezo an (einmalig beim Start).
+    # Schlägt das fehl (z.B. zu alte rpi-lgpio-Version ohne PWM), bleibt
+    # buzzer_pwm = None: Knopf + Heartbeat laufen trotzdem normal weiter.
+    global buzzer_pwm
+    logging.info("Initialisiere Piezo auf GPIO%s ...", BUZZER_PIN)
     try:
         GPIO.setup(BUZZER_PIN, GPIO.OUT, initial=GPIO.LOW)
-        pwm = GPIO.PWM(BUZZER_PIN, BUZZER_FREQUENCY_HZ)
+        buzzer_pwm = GPIO.PWM(BUZZER_PIN, BUZZER_FREQUENCY_HZ)
     except Exception:
         logging.exception(
-            "Buzzer-Thread konnte GPIO%s nicht initialisieren - Thread wird beendet. "
+            "Piezo auf GPIO%s konnte nicht initialisiert werden - es gibt keine Töne. "
             "Möglicherweise unterstützt die installierte rpi-lgpio-Version kein PWM "
             "(pip install --upgrade rpi-lgpio auf dem Pi probieren).",
             BUZZER_PIN,
         )
+
+
+def buzzer_loop():
+    logging.info("Buzzer-Thread gestartet.")
+
+    # Ohne funktionierenden Piezo braucht der Erinnerungs-Thread nicht zu laufen
+    # (Fehler wurde bereits in init_buzzer() geloggt).
+    if buzzer_pwm is None:
+        logging.error("Kein Piezo verfügbar - Buzzer-Thread wird beendet.")
         return
+    pwm = buzzer_pwm
 
     logging.info(
         "Buzzer-Thread bereit, frage %s alle %s Sekunden ab.",
@@ -144,6 +190,9 @@ def buzzer_loop():
 
 def main():
     GPIO.setmode(GPIO.BCM)
+    # Piezo zuerst einrichten, damit der Bestätigungston schon beim allerersten
+    # Knopfdruck bereitsteht.
+    init_buzzer()
     GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     # Taster verbindet GPIO17 mit GND -> Signal fällt beim Drücken von HIGH auf LOW
     GPIO.add_event_detect(

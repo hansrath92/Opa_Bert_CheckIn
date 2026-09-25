@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.5.0 – 2026-09-25
+- Neu: Knopf spielt nach erfolgreichem Druck ein kurzes "Ding-Dong" als Bestätigung für Opa
+
 ## 1.4.0 – 2026-09-25
 - Neu: Vercel Analytics aktiviert, um Nutzung (wer/wann/wo) nachvollziehen zu können
 - Erinnerungszeiten der Familie sind jetzt in Einstellungen zu finden statt auf "Heute"
