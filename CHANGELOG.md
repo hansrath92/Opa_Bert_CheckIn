@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.6.1 – 2026-09-26
+- Fix: Knopf löst nicht mehr fälschlich beim Einstecken des Netzteils aus
+
 ## 1.6.0 – 2026-09-26
 - Neu: Tägliche Erinnerung beim Öffnen der App, solange Benachrichtigungen nicht aktiviert sind
 

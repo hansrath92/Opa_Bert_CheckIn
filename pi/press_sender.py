@@ -29,6 +29,17 @@ BUTTON_DEBOUNCE_MS = 250
 PRESS_LOCKOUT_SECONDS = 2.0
 last_press_at = 0.0  # Zeitpunkt (time.monotonic) des letzten gezählten Drucks
 
+# Schutz gegen Fehlauslösungen durch Spannungsspitzen (z.B. beim Einstecken
+# des Netzteils):
+# - STARTUP_IGNORE_SECONDS: In den ersten Sekunden nach Programmstart wird
+#   jeder erkannte Druck ignoriert - genau dann treten die Spitzen auf.
+# - CONFIRM_CHECK_SECONDS: Nach einem erkannten Druck kurz warten und den Pin
+#   erneut lesen. Nur wenn er dann immer noch LOW ist (Knopf wirklich noch
+#   gedrückt), zählt der Druck. Eine Störspitze ist bis dahin längst vorbei.
+STARTUP_IGNORE_SECONDS = 5.0
+CONFIRM_CHECK_SECONDS = 0.05
+program_started_at = time.monotonic()  # wird in main() nochmal exakt gesetzt
+
 # Leitet sich aus API_URL ab (z.B. ".../api/press" -> ".../api/heartbeat"),
 # damit nur eine URL in der .env gepflegt werden muss.
 HEARTBEAT_URL = API_URL.replace("/api/press", "/api/heartbeat")
@@ -81,6 +92,25 @@ def send_press():
 
 def on_button_pressed(channel):
     global last_press_at
+
+    # Schutz 1: Start-Ignorierzeit - Drücke direkt nach dem Programmstart sind
+    # sehr wahrscheinlich Spannungsspitzen vom Einschalten, keine echten.
+    if time.monotonic() - program_started_at < STARTUP_IGNORE_SECONDS:
+        logging.info(
+            "Knopfdruck ignoriert (innerhalb der ersten %s s nach Start).",
+            STARTUP_IGNORE_SECONDS,
+        )
+        return
+
+    # Schutz 2: Bestätigungsprüfung - kurz warten, dann nachsehen, ob der Knopf
+    # immer noch gedrückt ist (LOW). Ist der Pin schon wieder HIGH, war es nur
+    # eine kurze Störspitze. Steht bewusst VOR der Doppeldruck-Sperre, damit
+    # eine Störung die Sperre nicht auslöst und einen echten Druck blockiert.
+    time.sleep(CONFIRM_CHECK_SECONDS)
+    if GPIO.input(BUTTON_PIN) != GPIO.LOW:
+        logging.info("Knopfdruck ignoriert (Pin nach %s s wieder HIGH - Störspitze).", CONFIRM_CHECK_SECONDS)
+        return
+
     now = time.monotonic()
     if now - last_press_at < PRESS_LOCKOUT_SECONDS:
         logging.info("Knopfdruck ignoriert (weniger als %s s nach dem letzten).", PRESS_LOCKOUT_SECONDS)
@@ -211,6 +241,10 @@ def buzzer_loop():
 
 
 def main():
+    # Startzeitpunkt für die Start-Ignorierzeit (siehe on_button_pressed).
+    global program_started_at
+    program_started_at = time.monotonic()
+
     GPIO.setmode(GPIO.BCM)
     # Piezo zuerst einrichten, damit der Bestätigungston schon beim allerersten
     # Knopfdruck bereitsteht.

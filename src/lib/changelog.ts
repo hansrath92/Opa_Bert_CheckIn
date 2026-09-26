@@ -7,6 +7,11 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.6.1",
+    date: "2026-09-26",
+    changes: ["Fix: Knopf löst nicht mehr fälschlich beim Einstecken des Netzteils aus"],
+  },
+  {
     version: "1.6.0",
     date: "2026-09-26",
     changes: ["Neu: Tägliche Erinnerung beim Öffnen der App, solange Benachrichtigungen nicht aktiviert sind"],
