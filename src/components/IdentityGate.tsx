@@ -67,6 +67,14 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [onboardingActive, setOnboardingActive] = useState(false);
+  // Merkt sich, ob der Rundgang in dieser Sitzung schon lief - AppPopups zeigt
+  // dann nicht direkt danach noch die Benachrichtigungs-Erinnerung.
+  const [onboardingSeen, setOnboardingSeen] = useState(false);
+
+  function startOnboarding() {
+    setOnboardingActive(true);
+    setOnboardingSeen(true);
+  }
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -172,7 +180,7 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
       saveContact(data.contact);
       setStage("ready");
       // Ganz neue Person -> Rundgang zeigen, sobald die Seite steht.
-      setOnboardingActive(true);
+      startOnboarding();
     } catch {
       setFormError("Verbindung fehlgeschlagen, bitte erneut versuchen");
     } finally {
@@ -185,11 +193,11 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
   if (stage === "ready" && contact) {
     return (
       <ContactContext.Provider
-        value={{ contact, updateContact: saveContact, startOnboarding: () => setOnboardingActive(true), logout }}
+        value={{ contact, updateContact: saveContact, startOnboarding, logout }}
       >
         <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
         <TabBar />
-        <AppPopups />
+        <AppPopups onboardingActive={onboardingActive} onboardingSeen={onboardingSeen} />
         {onboardingActive && <OnboardingTour onClose={() => setOnboardingActive(false)} />}
       </ContactContext.Provider>
     );
