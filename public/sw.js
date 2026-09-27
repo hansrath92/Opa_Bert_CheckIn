@@ -10,7 +10,7 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || "Opa-Checkin";
+  const title = data.title || "Lebenszeichen";
   const body = data.body || "";
 
   event.waitUntil(

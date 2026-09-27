@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.7.1 – 2026-09-27
+- App heißt jetzt "Lebenszeichen" statt "Opa-Checkin" (Titel, Homescreen-Icon, Push-Nachrichten)
+
 ## 1.7.0 – 2026-09-27
 - Neu: "Meine Benachrichtigungen" – jede Person stellt ihre eigenen Benachrichtigungen ein (an/aus, automatische oder feste Uhrzeit)
 - Neu: Auf Wunsch eine Nachricht bei jedem Knopfdruck von Opa

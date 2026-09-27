@@ -205,7 +205,7 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
 
   return (
     <main className="flex flex-1 flex-col justify-center gap-4 px-6 py-6">
-      <h1 className="mb-2 text-2xl font-semibold">Opa-Checkin</h1>
+      <h1 className="mb-2 text-2xl font-semibold">Lebenszeichen</h1>
 
       {stage === "chooser" && (
         <div className="flex flex-col gap-3">
