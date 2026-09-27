@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.11.0 – 2026-09-27
+- Neu: In "Erinnerungszeiten heute" springt "Bearbeiten" bei deiner eigenen Zeile direkt zu "Meine Benachrichtigungen"
+
 ## 1.10.4 – 2026-09-27
 - Fix: Onboarding-Erklärung deckte teilweise den gerade erklärten Button zu (z.B. bei "Opa erinnern"/"Opa anrufen") - zeigt jetzt oben statt unten an, wenn nötig
 

@@ -7,6 +7,11 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.11.0",
+    date: "2026-09-27",
+    changes: ["Neu: In Erinnerungszeiten heute springt Bearbeiten bei deiner eigenen Zeile direkt zu Meine Benachrichtigungen"],
+  },
+  {
     version: "1.10.4",
     date: "2026-09-27",
     changes: [

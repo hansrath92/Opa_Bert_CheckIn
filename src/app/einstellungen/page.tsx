@@ -8,7 +8,7 @@ import { CHANGELOG } from "@/lib/changelog";
 import { PRESS_LABEL } from "@/lib/naming";
 import { ThemePreference, applyTheme, getStoredTheme } from "@/lib/theme";
 import { useContact, useLogout, useStartOnboarding, useUpdateContact } from "@/components/IdentityGate";
-import CollapsibleSection from "@/components/CollapsibleSection";
+import CollapsibleSection, { expandSection } from "@/components/CollapsibleSection";
 
 // Einfacher An/Aus-Schalter (statt Checkbox), gut mit dem Daumen bedienbar.
 function Toggle({
@@ -162,7 +162,7 @@ function MeineBenachrichtigungenBereich() {
     );
 
   return (
-    <CollapsibleSection title="Meine Benachrichtigungen" dataOnboarding="notifications" summary={summary}>
+    <CollapsibleSection id="meine-benachrichtigungen" title="Meine Benachrichtigungen" dataOnboarding="notifications" summary={summary}>
       {/* Geräte-Ebene: Ohne Push-Abo auf diesem Gerät kommt keine Nachricht an,
           egal was unten eingestellt ist. */}
       <div className="flex items-center justify-between gap-4 p-4">
@@ -463,6 +463,7 @@ function KontaktUndAlarmBereich() {
 type ScheduleEntry = { name: string; mode: "automatic" | "fixed"; deadline: string };
 
 function ErinnerungszeitenHeuteBereich() {
+  const contact = useContact();
   const [schedule, setSchedule] = useState<ScheduleEntry[] | null>(null);
 
   useEffect(() => {
@@ -480,14 +481,31 @@ function ErinnerungszeitenHeuteBereich() {
         <div className="p-4 text-sm text-foreground-secondary">Niemand hat Abend-Benachrichtigungen aktiviert.</div>
       ) : (
         <>
-          {schedule.map((entry) => (
-            <div key={entry.name} className="flex items-center justify-between gap-4 p-4">
-              <span className="text-sm font-medium">{entry.name}</span>
-              <span className="text-sm text-foreground-secondary">
-                {getBerlinTimeLabel(new Date(entry.deadline))} Uhr {entry.mode === "fixed" ? "(fest)" : "(automatisch)"}
-              </span>
-            </div>
-          ))}
+          {schedule.map((entry) => {
+            const isMe = entry.name === contact.name;
+            return (
+              <div key={entry.name} className="flex items-center justify-between gap-4 p-4">
+                <span className="text-sm font-medium">{isMe ? `${entry.name} (Du)` : entry.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-foreground-secondary">
+                    {getBerlinTimeLabel(new Date(entry.deadline))} Uhr{" "}
+                    {entry.mode === "fixed" ? "(fest)" : "(automatisch)"}
+                  </span>
+                  {/* Springt zu "Meine Benachrichtigungen" und klappt es auf - dort
+                      kann jede Person nur ihre EIGENEN Zeiten ändern, deshalb gibt
+                      es diesen Link nur bei der eigenen Zeile. */}
+                  {isMe && (
+                    <button
+                      onClick={() => expandSection("meine-benachrichtigungen")}
+                      className="shrink-0 text-sm font-medium text-accent underline"
+                    >
+                      Bearbeiten
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
           <p className="p-4 text-xs text-foreground-secondary">
             Ab dieser Uhrzeit wird die Person benachrichtigt, falls Opa sich abends noch nicht gemeldet hat. Die
             Prüfung läuft alle 15 Minuten, es kann also bis zu 15 Minuten später werden.
