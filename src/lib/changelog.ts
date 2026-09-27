@@ -7,6 +7,14 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.10.1",
+    date: "2026-09-27",
+    changes: [
+      "So funktioniert's komplett neu geschrieben, spiegelt jetzt die aktuellen Funktionen wider",
+      "Erste Schritte erneut ansehen ist von Version zu So funktioniert's umgezogen (thematisch passender)",
+    ],
+  },
+  {
     version: "1.10.0",
     date: "2026-09-27",
     changes: [

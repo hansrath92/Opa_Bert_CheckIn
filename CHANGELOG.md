@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.1 – 2026-09-27
+- "So funktioniert's" komplett neu geschrieben, spiegelt jetzt die aktuellen Funktionen wider
+- "Erste Schritte erneut ansehen" ist von "Version" zu "So funktioniert's" umgezogen (thematisch passender)
+
 ## 1.10.0 – 2026-09-27
 - Erste-Schritte-Rundgang deutlich ausführlicher: erklärt jetzt Schritt für Schritt die ganze App (12 statt 4 Stationen), mit "Zurück"-Möglichkeit
 - "Was ist neu" zeigt jetzt immer nur die allerletzte Version, nicht mehr alle übersprungenen auf einmal

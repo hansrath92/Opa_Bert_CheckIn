@@ -51,3 +51,5 @@ mit einem simplen "Verstanden"/"Schließen"-Button.
 
 Zeig mir zwischendurch kurz dein Vorgehen, und frag nach, falls dir etwas
 unklar ist.
+
+Bei Önderungen übernimm das direkt in die Onboarding beschreibung wenn es fpr den USer ein neues Feature ist

@@ -529,34 +529,76 @@ function FamilieBereich() {
 }
 
 function SoFunktioniertsBereich() {
+  const startOnboarding = useStartOnboarding();
+
   return (
     <CollapsibleSection title="So funktioniert's">
-      <p className="p-4 text-sm text-foreground-secondary">
-        Opa drückt morgens beim Aufstehen und abends beim Abschließen auf seinen roten Knopf. Ein Druck vor 12 Uhr
-        zählt als „{PRESS_LABEL.morning}“, danach als „{PRESS_LABEL.evening}“.
-      </p>
-      <p className="p-4 text-sm text-foreground-secondary">
-        Fehlt abends die Meldung, bekommt jede Person zu ihrer eigenen Zeit eine Nachricht (einstellbar unter „Meine
-        Benachrichtigungen“). Meldet jemand „Ich habe ihn getroffen“, bekommen die übrigen keine mehr.
-      </p>
-      <p className="p-4 text-sm text-foreground-secondary">
-        Fehlt morgens um 11 Uhr die Meldung, wird die Familie nacheinander benachrichtigt: Reagiert niemand innerhalb
-        von 60 Minuten, geht es automatisch an die nächste Person weiter.
-      </p>
-    </CollapsibleSection>
-  );
-}
+      <div className="flex flex-col gap-1 p-4">
+        <p className="text-sm font-medium">Der Button bei Opa</p>
+        <p className="text-sm text-foreground-secondary">
+          Opa hat einen roten Knopf zuhause. Drückt er ihn morgens, zählt das als „{PRESS_LABEL.morning}“. Drückt er
+          ihn abends, zählt das als „{PRESS_LABEL.evening}“. Mehr muss er nicht tun – kein Handy, keine App für ihn.
+        </p>
+      </div>
 
-function ErsteSchritteUndVersionBereich() {
-  const startOnboarding = useStartOnboarding();
-  const [showChangelog, setShowChangelog] = useState(false);
+      <div className="flex flex-col gap-1 p-4">
+        <p className="text-sm font-medium">Wenn sich Opa nicht meldet</p>
+        <p className="text-sm text-foreground-secondary">
+          Fehlt die {PRESS_LABEL.evening}-Meldung zur erwarteten Zeit, passiert Folgendes:
+        </p>
+        <ul className="mt-1 flex flex-col gap-0.5 text-sm text-foreground-secondary">
+          <li>• Bei Opa zuhause piept ein kleiner Summer alle 20 Sekunden, um ihn ans Drücken zu erinnern</li>
+          <li>• Du bekommst eine Nachricht auf dein Handy</li>
+        </ul>
+      </div>
 
-  return (
-    <CollapsibleSection title="Erste Schritte & Version" summary={`v${CHANGELOG[0].version}`}>
+      <div className="flex flex-col gap-1 p-4">
+        <p className="text-sm font-medium">Was du einstellen kannst</p>
+        <p className="text-sm text-foreground-secondary">Unter „Meine Benachrichtigungen“ bestimmst du für dich selbst:</p>
+        <ul className="mt-1 flex flex-col gap-0.5 text-sm text-foreground-secondary">
+          <li>• Ob du überhaupt benachrichtigt werden willst</li>
+          <li>• Ob deine Erinnerungszeit automatisch (an den Sonnenuntergang gekoppelt) oder fest sein soll</li>
+          <li>• Ob du zusätzlich bei JEDEM Knopfdruck eine Nachricht willst, nicht nur im Alarmfall</li>
+        </ul>
+      </div>
+
+      <div className="flex flex-col gap-1 p-4">
+        <p className="text-sm font-medium">Wenn eine Meldung fehlt – was du tun kannst</p>
+        <ul className="mt-1 flex flex-col gap-0.5 text-sm text-foreground-secondary">
+          <li>• <span className="font-medium text-foreground">Opa anrufen</span> – direkt aus der App</li>
+          <li>
+            • <span className="font-medium text-foreground">Opa erinnern</span> – löst sofort den Piepton bei ihm
+            aus, auch außerhalb der üblichen Zeit
+          </li>
+          <li>
+            • <span className="font-medium text-foreground">Alles in Ordnung</span> – falls du weißt, dass es ihm
+            gut geht, er aber einfach nicht gedrückt hat (z.B. beim Arzt), gibst du Entwarnung – das informiert
+            auch alle anderen
+          </li>
+        </ul>
+      </div>
+
+      <div className="flex flex-col gap-1 p-4">
+        <p className="text-sm font-medium">Der Wochenüberblick</p>
+        <p className="text-sm text-foreground-secondary">
+          Sonne und Mond zeigen dir auf einen Blick, an welchen Tagen sich Opa pünktlich gemeldet hat – tippe auf
+          einen Tag für Details.
+        </p>
+      </div>
+
       <button onClick={startOnboarding} className="flex items-center justify-between gap-4 p-4 text-left text-sm font-medium">
         Erste Schritte erneut ansehen
         <span className="text-foreground-secondary">›</span>
       </button>
+    </CollapsibleSection>
+  );
+}
+
+function VersionBereich() {
+  const [showChangelog, setShowChangelog] = useState(false);
+
+  return (
+    <CollapsibleSection title="Version" summary={`v${CHANGELOG[0].version}`}>
       <button
         onClick={() => setShowChangelog((v) => !v)}
         className="flex items-center justify-between gap-4 p-4 text-left text-sm font-medium"
@@ -594,7 +636,7 @@ export default function EinstellungenPage() {
       <FamilieBereich />
       <DesignBereich />
       <SoFunktioniertsBereich />
-      <ErsteSchritteUndVersionBereich />
+      <VersionBereich />
     </main>
   );
 }
