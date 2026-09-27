@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.0 – 2026-09-27
+- "Heute" zeigt jetzt zusätzlich einen aufklappbaren Verlauf des heutigen Tages
+- Neu: 7-Tage-Übersicht mit Sonne/Mond, antippbar für Details zum jeweiligen Tag
+- Zeigt den letzten bekannten Druck an, wenn an einem neuen Tag noch keiner da ist
+- "Gute Nacht"-Countdown zeigt jetzt deine eigene, persönliche Erwartungszeit
+- Bei einem Alarm sind "Opa anrufen" und "Opa erinnern" jetzt ausgefüllt und stehen oben, sonst dezent unten
+- Neu: Hell/Dunkel-Umschalter in den Einstellungen (Standard: Hell)
+
 ## 1.8.2 – 2026-09-27
 - Pi-Online-Status ist von "Heute" in die Einstellungen umgezogen
 

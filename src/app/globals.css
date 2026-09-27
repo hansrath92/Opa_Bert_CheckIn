@@ -54,17 +54,18 @@
   --font-sans: var(--font-atkinson);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #14201a;
-    --card: #1c2b23;
-    --border: #2e4038;
-    --foreground: #eef3ed;
-    --foreground-secondary: #a9bcb0;
-    --success-bg: #1f3a2c;
-    --warning-bg: #3d2a1c;
-    --info-bg: #22303e;
-  }
+/* Hell/Dunkel ist eine bewusste Wahl der Person in den Einstellungen
+   (Standard: Hell), KEINE automatische prefers-color-scheme-Erkennung mehr -
+   deshalb ein Attribut-Selektor statt einer @media-Regel. Siehe src/lib/theme.ts. */
+:root[data-theme="dark"] {
+  --background: #14201a;
+  --card: #1c2b23;
+  --border: #2e4038;
+  --foreground: #eef3ed;
+  --foreground-secondary: #a9bcb0;
+  --success-bg: #1f3a2c;
+  --warning-bg: #3d2a1c;
+  --info-bg: #22303e;
 }
 
 body {

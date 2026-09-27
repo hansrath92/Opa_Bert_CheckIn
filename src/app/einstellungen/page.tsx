@@ -6,39 +6,9 @@ import { getPushSubscriptionStatus, subscribeToPush } from "@/lib/push";
 import { getBerlinTimeLabel } from "@/lib/press";
 import { CHANGELOG } from "@/lib/changelog";
 import { PRESS_LABEL } from "@/lib/naming";
+import { ThemePreference, applyTheme, getStoredTheme } from "@/lib/theme";
 import { useContact, useLogout, useStartOnboarding, useUpdateContact } from "@/components/IdentityGate";
-
-// Gemeinsame Bausteine für eine Strava-artige, gruppierte Einstellungs-Ansicht:
-// jede Gruppe ist standardmäßig zugeklappt, zeigt aber schon im zugeklappten
-// Zustand eine kurze Zusammenfassung (z.B. den aktuellen Status) - so sieht
-// man das Wichtigste auf einen Blick, ohne extra aufklappen zu müssen.
-function CollapsibleSection({
-  title,
-  summary,
-  defaultOpen = false,
-  dataOnboarding,
-  children,
-}: {
-  title: string;
-  summary?: React.ReactNode;
-  defaultOpen?: boolean;
-  dataOnboarding?: string;
-  children: React.ReactNode;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  return (
-    <div data-onboarding={dataOnboarding} className="overflow-hidden rounded-[var(--radius-card)] border border-border bg-card">
-      <button onClick={() => setIsOpen((v) => !v)} className="flex w-full items-center justify-between gap-4 p-4 text-left">
-        <span className="text-xs font-semibold uppercase tracking-wide text-foreground-secondary">{title}</span>
-        <span className="flex items-center gap-2 text-sm text-foreground-secondary">
-          {summary}
-          <span>{isOpen ? "︿" : "﹀"}</span>
-        </span>
-      </button>
-      {isOpen && <div className="flex flex-col divide-y divide-border border-t border-border">{children}</div>}
-    </div>
-  );
-}
+import CollapsibleSection from "@/components/CollapsibleSection";
 
 // Einfacher An/Aus-Schalter (statt Checkbox), gut mit dem Daumen bedienbar.
 function Toggle({
@@ -351,6 +321,38 @@ function PiStatusBereich() {
   );
 }
 
+// Hell/Dunkel: Standard ist Hell, bis die Person hier explizit Dunkel wählt
+// (siehe src/lib/theme.ts - keine automatische Systemerkennung mehr).
+function DesignBereich() {
+  const [theme, setTheme] = useState<ThemePreference>("light");
+
+  // Erst nach dem Mounten den echten gespeicherten Wert lesen (localStorage
+  // ist im Server-Rendering nicht verfügbar).
+  useEffect(() => {
+    setTheme(getStoredTheme());
+  }, []);
+
+  function choose(value: ThemePreference) {
+    setTheme(value);
+    applyTheme(value);
+  }
+
+  return (
+    <CollapsibleSection title="Design" summary={theme === "dark" ? "Dunkel" : "Hell"}>
+      <div className="flex flex-col gap-2 p-4">
+        <label className="flex items-center gap-2 text-sm">
+          <input type="radio" name="theme" checked={theme === "light"} onChange={() => choose("light")} />
+          Hell
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="radio" name="theme" checked={theme === "dark"} onChange={() => choose("dark")} />
+          Dunkel
+        </label>
+      </div>
+    </CollapsibleSection>
+  );
+}
+
 function KontaktUndAlarmBereich() {
   const contact = useContact();
   const logout = useLogout();
@@ -589,6 +591,7 @@ export default function EinstellungenPage() {
       <PiStatusBereich />
       <ErinnerungszeitenHeuteBereich />
       <FamilieBereich />
+      <DesignBereich />
       <SoFunktioniertsBereich />
       <ErsteSchritteUndVersionBereich />
     </main>

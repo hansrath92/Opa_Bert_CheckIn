@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Atkinson_Hyperlegible } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import Script from "next/script";
 import "./globals.css";
 import IdentityGate from "@/components/IdentityGate";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 // Redesign v2: gut lesbare Schrift statt IBM Plex Sans (Zielgruppe schließt
 // Familienmitglieder mit Sehschwäche ein). Nur 400/700 verfügbar - dazwischen
@@ -31,6 +33,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${atkinsonHyperlegible.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        {/* Setzt data-theme="dark" (falls gewählt) VOR dem ersten Rendern -
+            sonst würde die Seite bei Dunkel-Modus kurz hell aufblitzen. */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
         <IdentityGate>{children}</IdentityGate>
         <Analytics />
       </body>

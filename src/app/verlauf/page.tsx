@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getBerlinDateKey, getBerlinTimeLabel } from "@/lib/press";
 import { PRESS_LABEL } from "@/lib/naming";
+import { buildLastDayKeys, weekdayLabelForDateKey } from "@/lib/days";
 
 type Press = { type: "morning" | "evening"; created_at: string };
 type Reminder = { contact_name: string; created_at: string };
@@ -27,22 +28,10 @@ type DayEntry = {
 // Presses werden nach 7 Tagen automatisch gelöscht (siehe Migration 0006),
 // daher zeigen wir hier maximal die letzten 7 Tage an.
 const DAYS_TO_SHOW = 7;
-const WEEKDAY_LABELS = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
-
-function buildLastDays(count: number): string[] {
-  const days: string[] = [];
-  for (let i = 0; i < count; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    days.push(getBerlinDateKey(date));
-  }
-  return days;
-}
 
 function formatDateLabel(dateKey: string): string {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  const weekday = WEEKDAY_LABELS[new Date(year, month - 1, day).getDay()];
-  return `${weekday}, ${String(day).padStart(2, "0")}.${String(month).padStart(2, "0")}.`;
+  const [, month, day] = dateKey.split("-").map(Number);
+  return `${weekdayLabelForDateKey(dateKey)}, ${String(day).padStart(2, "0")}.${String(month).padStart(2, "0")}.`;
 }
 
 export default function VerlaufPage() {
@@ -67,7 +56,7 @@ export default function VerlaufPage() {
         dailyStatuses: DailyStatus[];
       };
 
-      const dateKeys = buildLastDays(DAYS_TO_SHOW);
+      const dateKeys = buildLastDayKeys(DAYS_TO_SHOW);
 
       setDays(
         dateKeys.map((dateKey) => {
