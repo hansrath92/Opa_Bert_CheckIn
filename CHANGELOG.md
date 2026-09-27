@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.0 – 2026-09-27
+- Neues Design: warmes Beige/Grün statt Teal, besser lesbare Schrift (Atkinson Hyperlegible)
+- Neue Namen: "Guten Morgen" / "Gute Nacht" statt "aufgestanden" / "Tür zu"
+- "Heute" zeigt jetzt an, in welchem Zeitfenster die Gute-Nacht-Meldung zählt
+- Neu: Bei einem Abend-Alarm kann jede benachrichtigte Person "Alles in Ordnung – nur nicht gedrückt" antippen. Das stoppt den Piepser bei Opa, informiert die anderen und wird im Verlauf vermerkt
+
 ## 1.7.0 – 2026-09-27
 - Neu: "Meine Benachrichtigungen" – jede Person stellt ihre eigenen Benachrichtigungen ein (an/aus, automatische oder feste Uhrzeit)
 - Neu: Auf Wunsch eine Nachricht bei jedem Knopfdruck von Opa

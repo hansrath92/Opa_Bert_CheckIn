@@ -10,6 +10,7 @@ export type BuzzerState = {
   buzzerManuallyTriggered: boolean;
   eveningPressTime: string | null;
   autoTriggeredAt: string | null;
+  eveningStoodDownAt: string | null;
 };
 
 // Gemeinsame Logik für /api/buzzer-status (vom Pi gepollt) und
@@ -20,7 +21,7 @@ export async function computeBuzzerState(now: Date): Promise<BuzzerState> {
 
   const { data: status, error } = await supabaseAdmin
     .from("daily_status")
-    .select("evening_press_time, buzzer_manually_triggered, auto_triggered_at")
+    .select("evening_press_time, buzzer_manually_triggered, auto_triggered_at, evening_stood_down_at")
     .eq("date_key", todayKey)
     .maybeSingle();
 
@@ -28,16 +29,21 @@ export async function computeBuzzerState(now: Date): Promise<BuzzerState> {
 
   const eveningPressTime = status?.evening_press_time ?? null;
   const buzzerManuallyTriggered = status?.buzzer_manually_triggered ?? false;
+  const eveningStoodDownAt = status?.evening_stood_down_at ?? null;
   let autoTriggeredAt: string | null = status?.auto_triggered_at ?? null;
 
-  if (eveningPressTime !== null) {
-    // Abend-Druck ist schon da -> Buzzer ist in jedem Fall aus, egal was sonst gilt.
+  // Abend-Druck ODER Entwarnung ("Alles in Ordnung - nur nicht gedrückt") ->
+  // Buzzer ist in jedem Fall aus, egal was sonst gilt. Eine Entwarnung zählt
+  // dabei bewusst NICHT als echter Druck (siehe evening_press_time-Feld) -
+  // sie stoppt nur den Piepser, ohne einen Knopfdruck vorzutäuschen.
+  if (eveningPressTime !== null || eveningStoodDownAt !== null) {
     return {
       shouldBuzz: false,
       timeConditionMet: false,
       buzzerManuallyTriggered,
       eveningPressTime,
       autoTriggeredAt,
+      eveningStoodDownAt,
     };
   }
 
@@ -62,5 +68,6 @@ export async function computeBuzzerState(now: Date): Promise<BuzzerState> {
     buzzerManuallyTriggered,
     eveningPressTime,
     autoTriggeredAt,
+    eveningStoodDownAt,
   };
 }

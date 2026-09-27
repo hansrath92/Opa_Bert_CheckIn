@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getPushSubscriptionStatus, subscribeToPush } from "@/lib/push";
 import { getBerlinTimeLabel } from "@/lib/press";
 import { CHANGELOG } from "@/lib/changelog";
+import { PRESS_LABEL } from "@/lib/naming";
 import { useContact, useLogout, useStartOnboarding, useUpdateContact } from "@/components/IdentityGate";
 
 // Gemeinsame Bausteine für eine Strava-artige, gruppierte Einstellungs-Ansicht:
@@ -25,7 +26,7 @@ function CollapsibleSection({
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div data-onboarding={dataOnboarding} className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div data-onboarding={dataOnboarding} className="overflow-hidden rounded-[var(--radius-card)] border border-border bg-card">
       <button onClick={() => setIsOpen((v) => !v)} className="flex w-full items-center justify-between gap-4 p-4 text-left">
         <span className="text-xs font-semibold uppercase tracking-wide text-foreground-secondary">{title}</span>
         <span className="flex items-center gap-2 text-sm text-foreground-secondary">
@@ -179,7 +180,7 @@ function MeineBenachrichtigungenBereich() {
     }
   }
 
-  const buttonClass = "rounded-full border border-border bg-card px-4 py-2 text-sm font-medium";
+  const buttonClass = "min-h-[56px] rounded-[var(--radius-card)] border border-border bg-card px-4 py-2 text-sm font-medium";
   const inputClass = "rounded-xl border border-border bg-card p-2";
 
   const summary =
@@ -222,14 +223,14 @@ function MeineBenachrichtigungenBereich() {
             <>
               <ToggleRow
                 title="Wenn Opa sich nicht meldet"
-                description="Abends zu deiner eigenen Zeit. Morgens (ab 11 Uhr) weiterhin nacheinander."
+                description={`${PRESS_LABEL.evening} zu deiner eigenen Zeit. ${PRESS_LABEL.morning} (ab 11 Uhr) weiterhin nacheinander.`}
                 checked={settings.notify_on_missed_checkin}
                 onChange={(value) => change({ notify_on_missed_checkin: value })}
               />
 
               {settings.notify_on_missed_checkin && (
                 <div className="flex flex-col gap-3 p-4">
-                  <span className="text-sm font-medium">Abends benachrichtigen ab</span>
+                  <span className="text-sm font-medium">{PRESS_LABEL.evening}: benachrichtigen ab</span>
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="radio"
@@ -348,7 +349,7 @@ function KontaktUndAlarmBereich() {
     }
   }
 
-  const buttonClass = "rounded-full border border-border bg-card px-4 py-2 text-sm font-medium";
+  const buttonClass = "min-h-[56px] rounded-[var(--radius-card)] border border-border bg-card px-4 py-2 text-sm font-medium";
 
   return (
     <div className="flex flex-col gap-5">
@@ -368,7 +369,7 @@ function KontaktUndAlarmBereich() {
           </span>
           <div className="flex flex-col gap-3">
             {myTurns.map((type) => (
-              <div key={type} className="flex flex-col gap-3 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-center">
+              <div key={type} className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-warning/40 bg-warning-bg p-4 text-center">
                 <p className="font-medium">
                   Opa hat sich {type === "morning" ? "heute Morgen" : "heute Abend"} noch nicht gemeldet. Bitte prüfen
                   und zurückmelden.
@@ -376,7 +377,7 @@ function KontaktUndAlarmBereich() {
                 <button
                   onClick={() => handleRespond(type, "met_opa")}
                   disabled={respondStatus === "sending"}
-                  className="rounded-full bg-success-text px-4 py-2 text-sm font-medium text-white"
+                  className="min-h-[56px] rounded-[var(--radius-card)] bg-success-text px-4 py-2 text-sm font-medium text-white"
                 >
                   Ich habe ihn getroffen
                 </button>
@@ -473,7 +474,7 @@ function SoFunktioniertsBereich() {
     <CollapsibleSection title="So funktioniert's">
       <p className="p-4 text-sm text-foreground-secondary">
         Opa drückt morgens beim Aufstehen und abends beim Abschließen auf seinen roten Knopf. Ein Druck vor 12 Uhr
-        zählt als „Morgens“, danach als „Abends“.
+        zählt als „{PRESS_LABEL.morning}“, danach als „{PRESS_LABEL.evening}“.
       </p>
       <p className="p-4 text-sm text-foreground-secondary">
         Fehlt abends die Meldung, bekommt jede Person zu ihrer eigenen Zeit eine Nachricht (einstellbar unter „Meine
