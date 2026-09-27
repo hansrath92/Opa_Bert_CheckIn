@@ -26,11 +26,21 @@ export async function GET() {
     return NextResponse.json({ error: remindersError.message }, { status: 500 });
   }
 
+  const { data: standDowns, error: standDownsError } = await supabaseAdmin
+    .from("evening_stand_downs")
+    .select("created_at, contacts(name)")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (standDownsError) {
+    return NextResponse.json({ error: standDownsError.message }, { status: 500 });
+  }
+
   // Für die Anzeige "Erinnerung aktiv von...bis" im Verlauf (Start: manueller
   // Trigger oder automatischer Alarm, Ende: Abend-Druck bzw. "läuft noch").
   const { data: dailyStatuses, error: dailyStatusError } = await supabaseAdmin
     .from("daily_status")
-    .select("date_key, auto_triggered_at, evening_press_time")
+    .select("date_key, auto_triggered_at, evening_press_time, evening_stood_down_at")
     .order("date_key", { ascending: false })
     .limit(14);
 
@@ -41,6 +51,10 @@ export async function GET() {
   return NextResponse.json({
     presses,
     reminders: (reminders ?? []).map((row) => ({
+      created_at: row.created_at,
+      contact_name: (row.contacts as unknown as { name: string } | null)?.name ?? "Unbekannt",
+    })),
+    standDowns: (standDowns ?? []).map((row) => ({
       created_at: row.created_at,
       contact_name: (row.contacts as unknown as { name: string } | null)?.name ?? "Unbekannt",
     })),

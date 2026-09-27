@@ -2,17 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { getBerlinDateKey, getBerlinTimeLabel } from "@/lib/press";
+import { PRESS_LABEL } from "@/lib/naming";
 
 type Press = { type: "morning" | "evening"; created_at: string };
 type Reminder = { contact_name: string; created_at: string };
-type DailyStatus = { date_key: string; auto_triggered_at: string | null; evening_press_time: string | null };
+type StandDown = { contact_name: string; created_at: string };
+type DailyStatus = {
+  date_key: string;
+  auto_triggered_at: string | null;
+  evening_press_time: string | null;
+  evening_stood_down_at: string | null;
+};
 type DayEntry = {
   dateKey: string;
   morning: Press[];
   evening: Press[];
   reminders: Reminder[];
+  standDowns: StandDown[];
   buzzerActiveSince: Date | null;
   buzzerActiveUntil: Date | null;
+  stoodDown: boolean;
 };
 
 // Presses werden nach 7 Tagen automatisch gelöscht (siehe Migration 0006),
@@ -51,9 +60,10 @@ export default function VerlaufPage() {
         return;
       }
 
-      const { presses, reminders, dailyStatuses } = (await response.json()) as {
+      const { presses, reminders, standDowns, dailyStatuses } = (await response.json()) as {
         presses: Press[];
         reminders: Reminder[];
+        standDowns: StandDown[];
         dailyStatuses: DailyStatus[];
       };
 
@@ -63,6 +73,9 @@ export default function VerlaufPage() {
         dateKeys.map((dateKey) => {
           const dayReminders = reminders
             .filter((r) => getBerlinDateKey(new Date(r.created_at)) === dateKey)
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
+          const dayStandDowns = standDowns
+            .filter((s) => getBerlinDateKey(new Date(s.created_at)) === dateKey)
             .sort((a, b) => a.created_at.localeCompare(b.created_at));
           const dailyStatus = dailyStatuses.find((d) => d.date_key === dateKey);
 
@@ -89,9 +102,17 @@ export default function VerlaufPage() {
               .filter((r) => r.type === "evening" && getBerlinDateKey(new Date(r.created_at)) === dateKey)
               .sort(sortByTime),
             reminders: dayReminders,
+            standDowns: dayStandDowns,
             buzzerActiveSince:
               activeSinceCandidates.length > 0 ? new Date(Math.min(...activeSinceCandidates)) : null,
-            buzzerActiveUntil: dailyStatus?.evening_press_time ? new Date(dailyStatus.evening_press_time) : null,
+            // "Bis wann" gilt sowohl bei einem echten Abend-Druck als auch bei
+            // einer Entwarnung als beendet - beide stoppen den Piepser gleichermaßen.
+            buzzerActiveUntil: dailyStatus?.evening_press_time
+              ? new Date(dailyStatus.evening_press_time)
+              : dailyStatus?.evening_stood_down_at
+              ? new Date(dailyStatus.evening_stood_down_at)
+              : null,
+            stoodDown: Boolean(dailyStatus?.evening_stood_down_at && !dailyStatus?.evening_press_time),
           };
         })
       );
@@ -113,11 +134,11 @@ export default function VerlaufPage() {
       ) : (
         <div data-onboarding="verlauf-list" className="flex flex-col gap-3">
           {days.map((day) => (
-            <div key={day.dateKey} className="rounded-2xl border border-border bg-card p-4">
+            <div key={day.dateKey} className="rounded-[var(--radius-card)] border border-border bg-card p-4">
               <div className="mb-2 font-medium">{formatDateLabel(day.dateKey)}</div>
               <div className="flex gap-4 text-sm">
                 <div className="flex-1">
-                  <div className="text-foreground-secondary">Morgens</div>
+                  <div className="text-foreground-secondary">{PRESS_LABEL.morning}</div>
                   {day.morning.length > 0 ? (
                     <div className="flex flex-col gap-0.5">
                       {day.morning.map((press, i) => (
@@ -131,7 +152,7 @@ export default function VerlaufPage() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="text-foreground-secondary">Abends</div>
+                  <div className="text-foreground-secondary">{PRESS_LABEL.evening}</div>
                   {day.evening.length > 0 ? (
                     <div className="flex flex-col gap-0.5">
                       {day.evening.map((press, i) => (
@@ -140,6 +161,8 @@ export default function VerlaufPage() {
                         </div>
                       ))}
                     </div>
+                  ) : day.stoodDown ? (
+                    <div className="text-sm text-warning">Entwarnt</div>
                   ) : (
                     <div className="text-foreground-secondary">–</div>
                   )}
@@ -147,17 +170,23 @@ export default function VerlaufPage() {
               </div>
               {day.buzzerActiveSince && (
                 <div className="mt-3 flex flex-col gap-1 border-t border-border pt-3 text-sm">
-                  <div className="text-accent">
+                  <div className="text-info">
                     Erinnerung aktiv: {getBerlinTimeLabel(day.buzzerActiveSince)} Uhr
                     {day.buzzerActiveUntil
                       ? ` – ${getBerlinTimeLabel(day.buzzerActiveUntil)} Uhr`
                       : day.dateKey === todayKey
                       ? " – läuft noch"
-                      : " (kein Abend-Druck registriert)"}
+                      : ` (kein ${PRESS_LABEL.evening}-Druck registriert)`}
                   </div>
                   {day.reminders.map((reminder, index) => (
-                    <div key={index} className="text-foreground-secondary">
+                    <div key={`r${index}`} className="text-foreground-secondary">
                       Erinnert von: {reminder.contact_name} um {getBerlinTimeLabel(new Date(reminder.created_at))} Uhr
+                    </div>
+                  ))}
+                  {day.standDowns.map((standDown, index) => (
+                    <div key={`s${index}`} className="text-warning">
+                      Entwarnung von: {standDown.contact_name} um {getBerlinTimeLabel(new Date(standDown.created_at))}{" "}
+                      Uhr
                     </div>
                   ))}
                 </div>

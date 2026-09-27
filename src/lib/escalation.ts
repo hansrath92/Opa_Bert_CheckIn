@@ -65,10 +65,19 @@ export async function notifyEveryPressSubscribers(type: IncidentType, pressedAt:
 
   if (error) throw new Error(error.message);
 
-  const what = type === "morning" ? "aufgestanden" : "Tür zu";
+  const what = type === "morning" ? "Guten Morgen" : "Gute Nacht";
   const body = `Opa hat sich gemeldet: ${what} um ${getBerlinTimeLabel(pressedAt)} Uhr`;
 
   await Promise.allSettled((contacts ?? []).map((contact) => sendPushToContact(contact.id, body)));
+}
+
+// Info-Push bei einer "Entwarnung" ("Alles in Ordnung - nur nicht gedrückt")
+// an alle ANDEREN Personen, die für den heutigen Abend-Alarm schon
+// benachrichtigt wurden - wer die Entwarnung selbst ausgelöst hat, braucht
+// keine Nachricht darüber.
+export async function notifyStandDown(otherContactIds: string[], byName: string): Promise<void> {
+  const body = `Entwarnung von ${byName}: Opa geht es gut, er hat nur nicht gedrückt.`;
+  await Promise.allSettled(otherContactIds.map((contactId) => sendPushToContact(contactId, body)));
 }
 
 // Schickt eine Push-Nachricht an ALLE Geräte, mit denen sich dieser eine Kontakt

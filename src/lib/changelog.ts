@@ -7,14 +7,24 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "1.7.2",
+    version: "1.8.2",
     date: "2026-09-27",
     changes: ["Pi-Online-Status ist von Heute in die Einstellungen umgezogen"],
   },
   {
-    version: "1.7.1",
+    version: "1.8.1",
     date: "2026-09-27",
     changes: ["App heißt jetzt Lebenszeichen statt Opa-Checkin (Titel, Homescreen-Icon, Push-Nachrichten)"],
+  },
+  {
+    version: "1.8.0",
+    date: "2026-09-27",
+    changes: [
+      "Neues Design: warmes Beige/Grün statt Teal, besser lesbare Schrift (Atkinson Hyperlegible)",
+      "Neue Namen: Guten Morgen / Gute Nacht statt aufgestanden / Tür zu",
+      "Heute zeigt jetzt an, in welchem Zeitfenster die Gute-Nacht-Meldung zählt",
+      "Neu: Bei einem Abend-Alarm kann jede benachrichtigte Person Alles in Ordnung – nur nicht gedrückt antippen. Das stoppt den Piepser bei Opa, informiert die anderen und wird im Verlauf vermerkt",
+    ],
   },
   {
     version: "1.7.0",

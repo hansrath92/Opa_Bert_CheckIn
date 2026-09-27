@@ -53,8 +53,8 @@ export function useLogout(): () => void {
 
 type Stage = "loading" | "chooser" | "pick" | "pin" | "join" | "ready";
 
-const inputClass = "rounded-xl border border-border bg-card p-2";
-const buttonClass = "rounded-full border border-border bg-card px-4 py-2 text-sm font-medium";
+const inputClass = "rounded-[var(--radius-card)] border border-border bg-card p-2";
+const buttonClass = "min-h-[56px] rounded-[var(--radius-card)] border border-border bg-card px-4 py-2 text-sm font-medium";
 
 export default function IdentityGate({ children }: { children: React.ReactNode }) {
   const [contact, setContact] = useState<Contact | null>(null);
@@ -225,7 +225,7 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
       )}
 
       {stage === "pick" && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+        <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-5">
           <h2 className="text-lg font-semibold">Wer bist du?</h2>
           {publicContacts === null ? (
             <p className="text-sm text-foreground-secondary">Lade…</p>
@@ -249,7 +249,7 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
       )}
 
       {stage === "pin" && selected && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+        <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-5">
           <h2 className="text-lg font-semibold">Hallo, {selected.name}</h2>
           <p className="text-sm text-foreground-secondary">
             Gib zur Bestätigung deine 4-stellige PIN ein.
@@ -271,7 +271,7 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
       )}
 
       {stage === "join" && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
+        <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-5">
           <h2 className="text-lg font-semibold">Neu beitreten</h2>
           <input placeholder="Dein Name" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
           <input

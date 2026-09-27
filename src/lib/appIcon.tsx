@@ -2,7 +2,7 @@
 // Manifest-Icons) - an einer Stelle gepflegt statt vierfach dupliziert.
 // Motiv "Puls-Signal": abstrakte, konzentrische Ringe um einen Punkt - steht
 // für "Lebenszeichen"/Verbindung, bewusst reduzierter als ein wörtliches
-// Knopf-Motiv.
+// Knopf-Motiv. Farbe an das Redesign-v2-Grün angeglichen (war Teal #0F766E).
 export function AppIconGraphic({ borderRadius = 0 }: { borderRadius?: number }) {
   return (
     <div
@@ -12,7 +12,7 @@ export function AppIconGraphic({ borderRadius = 0 }: { borderRadius?: number }) 
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#0F766E",
+        background: "#2F6B4F",
         borderRadius,
       }}
     >

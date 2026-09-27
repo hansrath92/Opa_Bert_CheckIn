@@ -1,126 +1,91 @@
 # Opa-Checkin – Projektanforderungen
 
-> Zentrale Quelle der Wahrheit für dieses Projekt. Wird laufend von Claude Code gepflegt.
-> Abgeschlossene Phasen werden kompakt zusammengefasst bzw. bei Bedarf in `opa-checkin-archiv.md` ausgelagert, damit diese Datei schlank bleibt.
+> Zentrale Quelle der Wahrheit für dieses Projekt. Wird von Claude Code (im Repo) UND in Planungs-Chats gepflegt – dieser Abgleich (26./27.9.) bringt beide Stände zusammen.
 
 ## 1. Ziel
-Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufstehen, abends beim Zuschließen der Haustür). Die Familie sieht in einer App, ob er sich gemeldet hat. Fehlt abends die Meldung + Toleranzzeit, bekommt die Familie eine Benachrichtigung – ohne dass ständig angerufen werden muss.
+Ein roter Button bei Opa zuhause, den er 2x täglich drückt (morgens beim Aufstehen, abends beim Zuschließen der Haustür). Die Familie sieht in einer App, ob er sich gemeldet hat. Fehlt abends die Meldung + Toleranzzeit, bekommt die Familie eine Benachrichtigung.
 
-## 2. Kernfunktion (MVP)
-- **Ein Button**, Unterscheidung über Uhrzeit: Druck vor 12 Uhr = "aufgestanden", Druck nach 12 Uhr = "Tür zu"
-- **Alarm-Regel:** Erwartungs-Uhrzeit für den Abend-Druck ist an den Sonnenuntergang gekoppelt (automatisch, jahreszeitabhängig), plus 2h Toleranz, dann Benachrichtigung. Genaue Formel wird in Phase 1 festgelegt.
-- **Benachrichtigung Phase 1:** Push-Nachricht (eigene App/PWA)
-- **Benachrichtigung Phase 2 (später):** zusätzlich WhatsApp
-- **Dashboard:** Familie kann jederzeit den aktuellen Status des Tages sehen (nicht nur im Alarmfall)
-- **Empfängerliste Phase 1:** feste Kontaktliste, alle bekommen die Nachricht
-- **Empfängerliste Phase 2 (später):** Prioritäts-/Eskalationsliste mit "Abwesend"-Schalter
+## 2. Status: LIVE auf main, aktuell Version 1.7.0 (Redesign auf Branch, siehe unten)
+**Achtung (27.9., Nachtrag):** Dieser Abschnitt war beim letzten Abgleich auf dem Stand "1.0.0" stehen geblieben - dazwischen liefen mehrere weitere Releases direkt im Repo, die der Planungs-Chat-Strang nicht kannte (Details in CHANGELOG.md, hier nur die wichtigsten):
+- Pi-Fixes: Bestätigungston (Ding-Dong) bei jedem Druck, Entprellzeit/Fehlauslösungs-Fixes (800→250ms), Start-Ignorierzeit + Bestätigungsprüfung gegen Spannungsspitzen beim Einstecken
+- Tägliche Erinnerung in der App, solange Push nicht aktiviert ist
+- **Größte Änderung (1.7.0):** Persönliche Benachrichtigungs-Einstellungen. Abends gibt es keine feste Eskalations-**Kette** mehr - jede Person stellt selbst ein (Einstellungen → "Meine Benachrichtigungen"): Hauptschalter an/aus, ob sie bei verpasstem Check-in benachrichtigt wird, automatisch (Sonnenuntergang+eigene Stunden) oder zu fester Uhrzeit, und optional eine Nachricht bei JEDEM Knopfdruck. Die `incidents`/`incident_contacts`-Tabellen aus der offenen Frage unten wurden dafür reaktiviert - sie werden also aktiv gebraucht, nicht mehr entfernen.
+- Morgens (Kette ab 11 Uhr) blieb dabei unverändert, enthält aber nur noch Personen mit aktiven Benachrichtigungen.
 
-## 3. Hardware
-- **Raspberry Pi 3** – eingerichtet, aktuell noch mit Test-WLAN zuhause, Umzug zu Opa steht noch aus.
-- **Roter Taster** – Arcade-Knopf, GPIO17 (physischer Pin 11) / GND (Pin 9). Braucht `bounce_time=0.5` Sekunden wegen Kontaktprellen.
-- **Piezo-Summer** (passiv, 2 Anschlüsse) – GPIO27 (physischer Pin 13) / GND (Pin 14). Sound-Parameter siehe Abschnitt 6.
-- **Standort:** Der Pi steht bei Opa zuhause (Strom + WLAN vorhanden).
-- **Sonnenuntergangs-Berechnung:** benötigt ungefähre Koordinaten/Ort von Opas Wohnort (z.B. sunrise-sunset.org API).
+Ursprüngliches Kernfunktions-Kompakt (MVP, weiterhin gültig):
+- Ein Button, Zeit-Grenze 12 Uhr (vorher = "aufgestanden", nachher = "Tür zu")
+- Alarm-Regel: Sonnenuntergang + Toleranz, automatisch, jahreszeitabhängig
+- Dashboard: Tabs "Heute" / "Verlauf" / "Einstellungen"
+- Erinnerungs-Historie: jede "Opa erinnern"-Auslösung einzeln geloggt, im Verlauf sichtbar
+- Live-Sichtbarkeit "Opa wird kontaktiert" inkl. Startzeit, solange der Piepser aktiv ist
 
-## 4. Architektur (Entwurf – kann sich noch ändern)
-- **Web-App:** Next.js + Supabase + Vercel (wie beim letzten Projekt)
-- **Raspberry Pi:** Python-Skript liest den Button-GPIO-Pin, sendet bei Tastendruck einen Request an eine Supabase Edge Function / API-Route. Ein zweiter Teil des Skripts fragt regelmäßig (Polling) beim Backend ab, ob der Buzzer aktiv sein soll (siehe Abschnitt 6).
-- **Alarm-Logik:** zeitgesteuerte Funktion (z.B. Supabase Cron / Vercel Cron), die täglich prüft, ob die erwartete Meldung da ist
-- **Notification Phase 1:** Web Push über PWA (iOS braucht 16.4+, Detail-Check in Phase 1)
-- **Auth (Stand 2026-09-18, Abend):** kein echtes Login mehr. Beim Öffnen der App (client-seitig, `IdentityGate`): "Ich bin schon dabei" (Namensauswahl aus `/api/contacts/list`, danach PIN-Bestätigung gegen `contacts.pin_hash`, SHA-256) oder "Ich bin neu" (Beitreten-Formular). Identität wird in `localStorage` gemerkt, kein Server-Cookie, kein Middleware-Zwang mehr. Bewusster Rückbau des PIN+Session-Cookie-Modells vom Vormittag (`middleware.ts`, `src/lib/session.ts` – beide entfernt) zugunsten des einfacheren, aus einem früheren Projekt übernommenen Musters. **Sicherheits-Tradeoff:** Aktionen (Einstellungen, Push-Abo, Eskalations-Rückmeldung, Erinnern) vertrauen wieder der vom Client mitgeschickten `contact_id`, ohne Server-Verifikation – akzeptiert für eine kleine, vertrauensvolle Familien-Gruppe.
+## 3. Auth-Architektur (Stand 18.9., bewusster Rückbau)
+Kein klassisches Server-Login mehr. Beim Öffnen (`IdentityGate`): "Ich bin schon dabei" (Namensauswahl + PIN-Bestätigung gegen `contacts.pin_hash`, SHA-256) oder "Ich bin neu" (Beitreten-Formular). Identität wird nur in `localStorage` gemerkt, kein Server-Cookie.
+**Bewusster Sicherheits-Tradeoff:** Aktionen vertrauen der vom Client mitgeschickten `contact_id` ohne Server-Verifikation – akzeptiert für eine kleine, vertrauensvolle Familien-Gruppe. Ein aufwendigeres Session-Cookie-Modell wurde testweise gebaut und wieder verworfen.
+**Vor Public-Schalten des Repos noch offen:** Rate-Limiting für `/api/contacts/confirm-pin` + `/api/contacts/register` fehlt noch (4-stellige PIN, aktuell ohne Bremse).
 
-## 5. Design – Familien-Dashboard
-- **Stil:** Klar & klinisch-schlicht (viel Weißraum, wie eine Gesundheits-App)
-- **Struktur:** Mehrere Tabs – "Heute", "Verlauf", "Einstellungen"
-- **Inhalt "Heute":** Status beider täglicher Drücke, Uhrzeit des letzten Drucks, Alarm-Zustand (grün "Alles in Ordnung" / teal "Opa wird kontaktiert" solange der Piepton aktiv ist, inkl. "aktiv seit HH:MM" / orange "Achtung: Meldung fehlt" bei Eskalation), Technik-Status (Pi online?), Schnellzugriff "Opa anrufen", Button "Opa erinnern" (siehe Abschnitt 6)
-- **Inhalt "Verlauf":** Listenansicht der letzten Tage, pro Tag zusätzlich alle Erinnerungs-Auslösungen ("Erinnert von: Name um Uhrzeit", mehrere Einträge möglich)
-- **Inhalt "Einstellungen":** Kontaktliste verwalten, manuelle Anpassung der Alarm-Zeiten
-- Mockup fertig (MVP-Stand final) — https://claude.ai/artifact/LsoRmoCHzmdW8Y3TLX7bq9
+## 4. Hardware
+- **Raspberry Pi 4 Model B** (nach Kurzschluss-Defekt des ursprünglichen Pi 3) – **bestätigt funktionierend**, `press_sender.py` läuft stabil (Heartbeat + Buzzer-Polling + Presses, inkl. Fix gegen Fehl-Erkennung durch Spannungsspitze beim Einstecken)
+- **Roter Taster** – GPIO17 (Pin 11) / GND (Pin 9), Bounce-Handling ~0.5s
+- **Piezo-Summer** (passiv) – GPIO27 (Pin 13) / GND (Pin 14), 2000 Hz, Lautstärke 0,3, Doppel-Piep alle 20s
+- **Noch offen:** Pi steht noch am Test-Standort, Umzug zu Opas echter Wohnung + echtem WLAN steht noch aus
+- **Bekannter, gefixter Bug (25.9.):** Sonnenuntergangs-Berechnung nutzte UTC- statt Berlin-Kalenderdatum, löste den Piepton fälschlich zwischen 0–2 Uhr nachts aus
 
-**Design-Tokens (exakt, für 1:1-Umsetzung in Claude Code):**
-- Schrift: Google Font "IBM Plex Sans" (400/500/600/700)
-- Farben: Hintergrund `#F6F7F8` · Karten `#FFFFFF` · Rahmen `#E2E5E8` · Text primär `#1A1D1F` · Text sekundär `#6B7280` · Akzent (Teal) `#0F766E` · Erfolg `#15803D` / hell `#DCFCE7` · Warnung `#B45309` · Fehler `#B91C1C`
-- Ecken-Radius: 16px (Karten), 14px (großer Button), 12px (kleine Elemente)
-- Abstände: 24px äußerer Rand, 18-20px Karten-Innenabstand, 12-16px zwischen Elementen
-- Icons: schlichte Strich-Icons (Feather-Stil), keine Emojis
-- Navigation: untere Tab-Leiste, aktiver Tab `#0F766E`, inaktiv `#9CA3AF`
-- Alle Screens Mobile-Format (390px Breite): Kopfbereich → Inhalts-Karten → feste Tab-Leiste unten
+## 5. Design – AKTUELL LIVE auf main (Redesign fertig auf Branch, siehe Abschnitt 6)
+- Stil: klinisch-schlicht, Schrift IBM Plex Sans, Akzentfarbe Teal `#0F766E`, Tabs "Heute"/"Verlauf"/"Einstellungen"
+- App-Icon: aktuell "Puls-Signal" (konzentrische Ringe + Punkt, Teal+Weiß) – ursprünglich "Roter Knopf auf Teal", auf Wunsch abstrakter gemacht (25.9.)
+- Ausführliches Onboarding: echter Spotlight-Rundgang (Seiten-Navigation + Element-Hervorhebung), über Einstellungen erneut aufrufbar
+- Einstellungen: nach Strava-Vorbild gruppiert/zuklappbar, echter Push-Status via Browser-Abo-Check
 
-## 6. Akustische Erinnerung (Buzzer)
-- **Sound-Parameter (final getestet):** Frequenz 2000 Hz, Tastverhältnis/Lautstärke 0,3, Muster: Doppel-Piep, Wiederholung alle 20 Sekunden
-- **Auslöser:**
-  1. Automatisch: 1 Stunde nach Sonnenuntergang, falls Abend-Druck fehlt
-  2. Manuell: Familie klickt im Dashboard-Tab "Heute" auf "Opa erinnern", unabhängig von Uhrzeit
-- **Stopp-Bedingung:** Sobald der Abend-Druck registriert wird, hört der Pi spätestens beim nächsten Abfrage-Zyklus auf zu piepen
-- **Architektur:** Backend berechnet live einen "soll piepen"-Zustand (Abend-Druck fehlt UND (Zeitbedingung erfüllt ODER manuell ausgelöst)). Pi fragt das per Polling (alle paar Sekunden) ab und steuert den Piezo lokal an. Gemeinsame Logik in `src/lib/buzzer.ts`, genutzt von `/api/buzzer-status` (Pi) und `/api/buzzer-live-status` (Dashboard).
-- **Sichtbarkeit (seit 2026-09-18):** `daily_status.auto_triggered_at` hält fest, seit wann die automatische Bedingung an einem Tag zutrifft. Dashboard zeigt live "Opa wird kontaktiert" inkl. Startzeit auf "Heute", Verlauf zeigt pro Tag die Aktiv-Zeitspanne (inkl. Ende = Abend-Druck bzw. "läuft noch").
-- **Offene Frage:** Piepen läuft aktuell unbegrenzt weiter bis Opa drückt – kein automatischer Timeout. Bei Bedarf später ergänzbar.
+## 6. Redesign v2 – GEBAUT auf Branch `redesign-v2` (27.9.), wartet auf Test + Merge
+Umgesetzt, Version 1.8.0 auf dem Branch, **main/Produktion unverändert** bis zum Merge:
+- Neuer Stil: warmes Beige/Grün (`#2F6B4F` statt Teal), Schrift "Atkinson Hyperlegible", Ecken-Radius 24px (Status-Kachel) / 18px (Karten/Buttons), Primär-Buttons ≥56px hoch
+- Neue Namensgebung überall im UI: "Guten Morgen" / "Gute Nacht" statt "aufgestanden"/"Tür zu" bzw. "Morgens"/"Abends" (zentral in `src/lib/naming.ts`)
+- Zeitlogik-Hybrid: Backend-Berechnung unverändert (Sonnenuntergang + Toleranz), "Heute" zeigt zusätzlich ein Zeitfenster ("Gute Nacht zählt zwischen 17:00 und HH:MM Uhr") - Start 17:00 fest gewählt, Ende = echte früheste Deadline des Tages
+- Neue Funktion "Entwarnung": bei aktivem Abend-Alarm sieht jede bereits benachrichtigte Person (nicht: jeder Kontakt) den Button "Alles in Ordnung – nur nicht gedrückt". Stoppt den Piepser bei Opa (eigenes Feld `evening_stood_down_at`, zählt bewusst NICHT als echter Druck), löst den Vorfall auf, informiert die übrigen benachrichtigten Personen per Push, wird im Verlauf als "Entwarnung von [Name]" protokolliert. Nur für den Abend - morgens unverändert.
+- Übernommen unverändert: Onboarding, Push-Status-Check, Erinnerungs-Historie, Live-Status "Opa wird kontaktiert" (jetzt in Blau/"Info" statt Teal), App-Icon (Farbe an Grün angepasst)
+- Bewusst NICHT übernommen (bleibt Phase-2-Idee): volles Eskalationssystem mit "Wer kümmert sich"-Zuweisung, Mehrfach-Zusagen, SOS von unterwegs, Nachbar-Kontakt
+- Migration 0012 (`evening_stand_down`) muss vor dem Merge im Supabase-Dashboard ausgeführt werden
 
-## 7. Roadmap / Checkliste
+## 7. Offene Fragen
+- ~~Wofür wurden `incidents`/`incident_contacts` angelegt?~~ **Geklärt (27.9.):** Sie werden aktiv gebraucht - siehe Abschnitt 2, Version 1.7.0 (persönliche Benachrichtigungs-Einstellungen). Zum Zeitpunkt dieser Frage enthielten sie bereits echte Produktivdaten (4 incidents, 9 incident_contacts, aus dem laufenden Familieneinsatz) - nicht aus Testcode.
+- Rate-Limiting für PIN-Endpunkte (siehe Abschnitt 3) vor Public-Schalten des Repos
+- Pi-Umzug zu Opas echter Wohnung/WLAN noch nicht erfolgt
+- **Neu:** Redesign v2 (Abschnitt 6) ist gebaut und lokal getestet (Build/Typecheck grün), aber noch nicht im Browser durchgeklickt und nicht auf main gemerged - siehe Test-Anleitung im Chat
 
-### Phase 0 – Setup (abgeschlossen)
-- [x] Projektname, Alarm-Regel-Prinzip, GitHub-Repo, Pi eingerichtet, Button verkabelt & getestet, Buzzer verkabelt & getestet
+## 8. Roadmap
 
-### Phase 1 – MVP (live seit 2026-09-23, Version 1.0.0)
-- [x] Supabase-Projekt aufsetzen (Tabellen: presses/daily_status, contacts) – 7 Migrationen (0001–0007)
-- [x] API-Route zum Empfangen der Button-Presses vom Pi (`/api/press`)
-- [x] API-Route + Logik für Buzzer-Status (`/api/buzzer-status` zum Lesen, `/api/buzzer-trigger` zum manuellen Auslösen)
-- [x] Python-Skript auf dem Pi fertigstellen (`press_sender.py`: Presses senden inkl. Retry, Heartbeat, Buzzer-Polling + Piezo-Ansteuerung GPIO27) – noch nicht auf dem echten Pi getestet
-- [x] Next.js Dashboard nach Mockup/Design-Tokens bauen (Heute/Verlauf/Einstellungen)
-- [x] Tägliche Prüf-Funktion: löst Alarm aus, wenn Meldung fehlt (`/api/cron/check-alarm`, per GitHub Actions alle 15 Min getriggert)
-- [x] Push-Benachrichtigung an Kontaktliste (Service Worker, Manifest, `push.ts`, `/api/push/subscribe`)
-- [x] Deployment auf Vercel (live unter opa-bert-check-in.vercel.app)
-- [x] Sicherheitsfix (2026-09-18): dashboard-weites Login per Session-Cookie statt der bisherigen ungeprüften Contact-ID; Erinnerungs-Historie (wer hat wann "Opa erinnern" gedrückt) im Verlauf-Tab
-- [x] Onboarding "Erste-Schritte-Einführung" beim ersten Login, über Einstellungen jederzeit erneut aufrufbar (2026-09-18)
-- [x] Live-Sichtbarkeit "Opa wird kontaktiert" auf Heute + Aktiv-Zeitspanne im Verlauf (2026-09-18)
-- [x] App-Icon (Favicon, Apple-Touch-Icon, PWA-Manifest-Icons), ursprünglich "Roter Knopf auf Teal" (18.9.), auf Wunsch zu "Puls-Signal" (konzentrische Ringe + Punkt, minimalistischer) überarbeitet (25.9.)
-- [x] Opas Telefonnummer und Standort aus dem Quellcode in Env-Variablen ausgelagert (2026-09-18)
-- [x] Einstellungen aufgeräumt (gruppiert, zuklappbar), echter Spotlight-Rundgang, echter Push-Status, Abmelden-Funktion (2026-09-23)
-- [x] Version 1.0.0 – offiziell live (2026-09-23)
+### Phase 0 + Phase 1 (MVP) – ABGESCHLOSSEN, live seit 23.9. (Version 1.0.0)
+Kompakt: Supabase-Setup, Presses/Buzzer/Cron/Push-APIs, Dashboard, Pi-Skript, Deployment, Auth-Umbau samt Rückbau, Onboarding, Live-Status-Anzeige, App-Icon (2x überarbeitet), Settings-Redesign, Sonnenuntergangs-Bug gefixt, Verlauf zeigt alle Presses eines Tages – alles erledigt.
+
+### Phase "1.5" – Redesign v2 (auf Branch `redesign-v2`, wartet auf Test + Merge)
+- [x] Entscheidung (27.9.): Redesign + Entwarnung + neue Namensgebung werden umgesetzt
+- [x] Klärung incidents/incident_contacts-Tabellen → werden aktiv gebraucht (siehe Abschnitt 2/7)
+- [x] "Entwarnung"-Funktion gebaut (27.9.)
+- [x] Design-Migration auf Beige/Grün + Atkinson Hyperlegible + "Guten Morgen"/"Gute Nacht" gebaut (27.9.)
+- [ ] Im Browser durchgetestet (siehe Test-Anleitung im Chat)
+- [ ] Migration 0012 in Supabase ausgeführt
+- [ ] Auf main gemerged
 
 ### Phase 2 – Ausbaustufen (später)
 - [ ] Prioritäts-/Eskalationsliste mit Abwesenheits-Schalter
+- [ ] Volles Eskalationssystem (Wer kümmert sich, SOS, Nachbar-Kontakt) – siehe Abschnitt 6
 - [ ] WhatsApp-Benachrichtigung
-- [ ] LED/Piepton-Feedback direkt am Button (Druck-Bestätigung für Opa)
+- [ ] LED/Piepton-Feedback direkt am Button
 - [ ] Pause-/Urlaubs-Modus
-- [ ] "Ich kümmere mich"-Markierung bei Alarm
-- [ ] Wochenrückblick, Benachrichtigungs-Protokoll
+- [ ] Wochenrückblick
 - [ ] Batteriestatus/Stromausfall-Erkennung beim Pi
 
-## 8. Offene Fragen
-- Genaue Formel für Erwartungs-Uhrzeit (z.B. "Sonnenuntergang + X Stunden")
-- Wie viele Familienmitglieder/Accounts zu Beginn?
-- Opas ungefährer Wohnort (für Sonnenuntergangs-Berechnung)
-
-## 8a. Was sonst noch ansteht
-
-- **Erledigt:** Heartbeat und Buzzer-Polling laufen auf dem echten Pi (Fix vom 18.9., seither auf Hardware bestätigt); Logout-Funktion (23.9.)
-- **Vor Public-Schalten des Repos:** Rate-Limiting für `/api/contacts/confirm-pin` + `/api/contacts/register` (4-stellige PIN, aktuell ohne Bremse)
-- **Hardware/Deployment:** Pi-Umzug von Test-WLAN zu Opas Wohnung
-
-## 9. Technische Entscheidungen (Log)
+## 9. Technische Entscheidungen (Log, zusammengeführt)
 | Datum | Entscheidung |
 |---|---|
-| 2026-09-09 | Projektname: **Opa-Checkin** |
-| 2026-09-09 | Ein Button mit Zeit-Grenze (12 Uhr) statt zwei separate Buttons |
-| 2026-09-09 | Push-Notification zuerst (Phase 1), WhatsApp erst Phase 2 |
-| 2026-09-09 | Eskalations-/Prioritätsliste erst Phase 2, Start mit fester Kontaktliste |
-| 2026-09-09 | Pi steht am Ende bei Opa, Taster einfacher Verkabelungs-Typ |
-| 2026-09-09 | Alarm-Erwartungszeit an Sonnenuntergang gekoppelt statt fixer Uhrzeit |
-| 2026-09-17 | Design: klinisch-schlicht, IBM Plex Sans, Teal-Akzent, 3 Tabs |
-| 2026-09-17 | Buzzer: passiver Piezo GPIO27, 2000Hz/0.3 Lautstärke, Doppel-Piep alle 20s |
-| 2026-09-18 | Sicherheitslücke gefunden (ungeprüfte Contact-ID) → Entscheidung: statt Einzel-Patch dashboard-weites Login einführen, damit auch die Erinnerungs-Historie zuverlässig einer Person zugeordnet werden kann |
-| 2026-09-18 | Erinnerungs-Historie: jede Auslösung wird einzeln geloggt (nicht nur ein Boolean), Anzeige im bestehenden Verlauf-Tab je Tag |
-| 2026-09-18 | Onboarding-Inhalt an bestehende Hilfe-Sektion angelehnt statt neu formuliert; zentrale `AppPopups`-Steuerung statt zwei unabhängiger localStorage-Komponenten (Race-Condition-Vermeidung) |
-| 2026-09-18 | Buzzer-Live-Status: neue Route statt bestehende `/api/buzzer-status` fürs Dashboard mitzunutzen, da die Pi-Route mit `PI_API_SECRET` statt Login-Session arbeitet |
-| 2026-09-18 | App-Icon: "Roter Knopf auf Teal" statt abstrakterer Motive – zeigt wortwörtlich das zentrale Objekt der App, per `next/og` ohne externes Rendering |
-| 2026-09-18 | Telefonnummer bleibt trotz Env-Variable im Client-Bundle sichtbar (wird aktiv in der UI gebraucht) – Fix entfernt sie nur aus dem Quellcode/Repo, nicht aus der laufenden App |
-| 2026-09-18 | Login-Modell auf Wunsch zurückgebaut: Namensauswahl + localStorage statt PIN-Session (bewährtes Muster aus einem früheren Projekt), PIN bleibt als gehashte Verwechslungs-Absicherung. Bewusster Sicherheits-Tradeoff gegenüber dem Vormittags-Umbau, akzeptiert für kleine vertrauensvolle Gruppe |
-| 2026-09-18 | Onboarding-Trigger von `AppPopups` (versionsbasiert) zu `IdentityGate` (direkt nach "Ich bin neu") verschoben – entspricht "beim allerersten App-Start einer neuen Person" präziser als der bisherige geräte-first-seen-Ansatz |
-| 2026-09-23 | Einstellungen nach Strava-Vorbild in klar beschriftete Gruppen umsortiert statt loser Kartenkette |
-| 2026-09-23 | Erste-Schritte-Einführung zum echten Spotlight-Rundgang ausgebaut (Seiten-Navigation + Element-Hervorhebung statt reinem Text-Popup) – bewusst die aufwendigere von zwei Optionen gewählt |
-| 2026-09-23 | Push-Status wird jetzt über den echten Browser-Abo-Status geprüft (`getPushSubscriptionStatus`), nicht mehr nur über einen State, der beim Neuladen verloren geht |
-| 2026-09-23 | Version 1.0.0: Go-Live-Entscheidung – Phase 1/MVP gilt als abgeschlossen, App geht in den echten Familieneinsatz |
-| 2026-09-24 | Verlauf zeigt jetzt alle Knopfdrücke eines Tages (nicht nur den letzten) – wichtig geworden beim Testen auf dem neuen Pi4 |
-| 2026-09-25 | Bug gefunden & gefixt: `getSunsetTimeUTC` nutzte UTC- statt Berlin-Kalenderdatum, löste den Piepton zwischen 0–2 Uhr nachts fälschlich sofort nach Mitternacht aus |
-| 2026-09-25 | App-Icon auf Wunsch von "Roter Knopf" zu "Puls-Signal" (konzentrische Ringe) überarbeitet – abstrakter, minimalistischer, Rot komplett entfernt zugunsten von reinem Teal+Weiß |
+| 2026-09-09 | Projektname: **Opa-Checkin**; ein Button mit 12-Uhr-Grenze; Push vor WhatsApp; Sonnenuntergangs-Kopplung statt fixer Uhrzeit |
+| 2026-09-17 | Design (live): klinisch-schlicht, IBM Plex Sans, Teal; Buzzer-Parameter final (2000Hz/0.3/Doppel-Piep/20s); Supabase Cron statt Vercel Cron |
+| 2026-09-18 | Sicherheitslücke (ungeprüfte Contact-ID) gefunden → dashboard-weites Login gebaut, dann bewusst wieder zurückgebaut zu Namensauswahl+PIN+localStorage (Tradeoff für kleine vertrauensvolle Gruppe); Erinnerungs-Historie einzeln geloggt; App-Icon "Roter Knopf auf Teal"; Telefonnummer in Env-Variable ausgelagert (bleibt aber im Client-Bundle sichtbar, da UI sie braucht) |
+| 2026-09-23 | Settings-Redesign (Strava-Vorbild); echter Spotlight-Rundgang statt Text-Popup; echter Push-Status-Check; **Version 1.0.0 live** |
+| 2026-09-24 | Verlauf zeigt jetzt alle Presses eines Tages (wichtig geworden beim Pi4-Test) |
+| 2026-09-25 | Bug gefixt: Sonnenuntergangs-Berechnung nutzte UTC- statt Berlin-Datum; App-Icon zu "Puls-Signal" (abstrakter, kein Rot mehr) überarbeitet |
+| 2026-09-18/26 (Kurzschluss-Vorfall, separater Strang) | Alter Pi 3 vermutlich durch Schrauben-Kurzschluss zerstört → Umstieg auf Pi 4 Model B, mittlerweile bestätigt funktionierend |
+| 2026-09-26 | Vergleich mit externem Mockup ("Opa-Buzzer App") → Vorschläge für Redesign/Entwarnung/neue Namensgebung erarbeitet, Entscheidung noch offen (siehe Abschnitt 6/7) |
+| 2026-09-27 | Zwischen 1.0.0 und diesem Abgleich liefen 6 weitere Releases direkt im Repo (bis 1.7.0), u.a. Pi-Fixes und persönliche Benachrichtigungs-Einstellungen pro Person (Abend-Eskalationskette entfällt dadurch) - Details siehe CHANGELOG.md |
+| 2026-09-27 | Redesign v2 + "Entwarnung" auf Branch `redesign-v2` gebaut (Version 1.8.0 auf dem Branch): Design-Migration, neue Namensgebung, Zeitfenster-Anzeige, Entwarnung-Funktion. `incidents`/`incident_contacts`-Frage geklärt (werden gebraucht). Noch offen: Browser-Test, Migration 0012, Merge auf main |

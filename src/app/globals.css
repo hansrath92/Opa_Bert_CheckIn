@@ -1,21 +1,36 @@
 @import "tailwindcss";
 
-/* Design-Tokens aus dem Familien-Dashboard-Mockup (siehe Opa-checkin.md, Abschnitt 8) */
+/* Design-Tokens Redesign v2 (warmes Beige/Grün statt klinisch-teal,
+   siehe Opa-checkin.md Abschnitt 6). Drei Bedeutungsfarben:
+   - accent/success (grün): Haupt-/Erfolgsfarbe, Buttons, "alles ok"
+   - warning (orange): Alarm/Achtung
+   - info (blau): "Opa wird erinnert" / Warte-Zustand - kein Alarm, aber auch
+     noch kein "erledigt" */
 :root {
-  --background: #f6f7f8;
+  --background: #f7f3ec;
   --card: #ffffff;
-  --border: #e2e5e8;
-  --foreground: #1a1d1f;
-  --foreground-secondary: #6b7280;
-  --accent: #0f766e;
-  --accent-inactive: #9ca3af;
-  --success-text: #15803d;
-  --success-bg: #dcfce7;
-  --warning: #b45309;
-  --error: #b91c1c;
+  --border: #ece6da;
+  --foreground: #1f2a24;
+  --foreground-secondary: #4a5a50;
+  --accent: #2f6b4f;
+  --accent-hover: #23513c;
+  --accent-inactive: #9ca89f;
+  --success-text: #2f6b4f;
+  --success-bg: #e1efe6;
+  --warning: #b4541a;
+  --warning-bg: #fbe7da;
+  --info: #3e5c76;
+  --info-bg: #e4ebf1;
+  /* Kein eigener Fehlerton im neuen Farbschema definiert - Formularfehler
+     nutzen bewusst denselben Warnton wie der Alarm-Zustand. */
+  --error: #b4541a;
 
   --status-done: var(--success-text);
   --status-pending: var(--foreground-secondary);
+
+  /* Ecken-Radius: 24px für die große Status-Kachel, 18px für Karten/Buttons. */
+  --radius-tile: 24px;
+  --radius-card: 18px;
 }
 
 @theme inline {
@@ -25,25 +40,30 @@
   --color-foreground: var(--foreground);
   --color-foreground-secondary: var(--foreground-secondary);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-inactive: var(--accent-inactive);
   --color-success-text: var(--success-text);
   --color-success-bg: var(--success-bg);
   --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
   --color-error: var(--error);
   --color-status-done: var(--status-done);
   --color-status-pending: var(--status-pending);
-  --font-sans: var(--font-ibm-plex-sans);
+  --font-sans: var(--font-atkinson);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --card: #171717;
-    --border: #2a2a2a;
-    --foreground: #ededed;
-    --foreground-secondary: #9ca3af;
-    --success-text: #4ade80;
-    --success-bg: #14532d;
+    --background: #14201a;
+    --card: #1c2b23;
+    --border: #2e4038;
+    --foreground: #eef3ed;
+    --foreground-secondary: #a9bcb0;
+    --success-bg: #1f3a2c;
+    --warning-bg: #3d2a1c;
+    --info-bg: #22303e;
   }
 }
 

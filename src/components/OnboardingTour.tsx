@@ -110,7 +110,7 @@ export default function OnboardingTour({ onClose }: { onClose: () => void }) {
             left: rect.left - SPOTLIGHT_PADDING,
             width: rect.width + SPOTLIGHT_PADDING * 2,
             height: rect.height + SPOTLIGHT_PADDING * 2,
-            borderRadius: 16,
+            borderRadius: 18,
             boxShadow: "0 0 0 9999px rgba(0,0,0,0.7)",
             pointerEvents: "none",
             zIndex: 51,
@@ -121,7 +121,7 @@ export default function OnboardingTour({ onClose }: { onClose: () => void }) {
       )}
 
       <div
-        className="fixed inset-x-0 bottom-0 z-[52] flex flex-col gap-3 rounded-t-2xl border-t border-border bg-card p-6"
+        className="fixed inset-x-0 bottom-0 z-[52] flex flex-col gap-3 rounded-t-[var(--radius-tile)] border-t border-border bg-card p-6"
         style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
       >
         <h2 className="text-lg font-semibold">{step.title}</h2>
@@ -141,7 +141,10 @@ export default function OnboardingTour({ onClose }: { onClose: () => void }) {
           <button onClick={onClose} className="p-2 text-sm text-foreground-secondary">
             Überspringen
           </button>
-          <button onClick={next} className="rounded-full bg-accent px-6 py-3 text-sm font-medium text-white">
+          <button
+            onClick={next}
+            className="min-h-[56px] rounded-[var(--radius-card)] bg-accent px-6 py-3 text-sm font-medium text-white active:bg-accent-hover"
+          >
             {isLast ? "Fertig" : "Weiter"}
           </button>
         </div>
