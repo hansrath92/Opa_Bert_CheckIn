@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getBerlinDateKey, getPressType } from "@/lib/press";
+import { notifyEveryPressSubscribers } from "@/lib/escalation";
 
 export async function POST(request: NextRequest) {
   const apiKey = request.headers.get("x-api-key");
@@ -35,6 +36,27 @@ export async function POST(request: NextRequest) {
 
   if (dailyStatusError) {
     return NextResponse.json({ error: dailyStatusError.message }, { status: 500 });
+  }
+
+  // Abend-Druck -> offener Abend-Alarm ist erledigt, damit niemand mehr eine
+  // "Opa hat sich nicht gemeldet"-Nachricht bekommt, dessen Zeit erst später
+  // kommt. (Der Cron prüft das auch, aber erst beim nächsten Lauf.)
+  if (type === "evening") {
+    await supabaseAdmin
+      .from("incidents")
+      .update({ status: "resolved" })
+      .eq("date_key", getBerlinDateKey(now))
+      .eq("type", "evening")
+      .eq("status", "open");
+  }
+
+  // Opt-in "bei jedem Knopfdruck benachrichtigen". Ein Fehler hier darf den
+  // Knopfdruck selbst NIE scheitern lassen - der ist oben schon gespeichert,
+  // und der Pi würde bei einer Fehlerantwort sonst unnötig neu senden.
+  try {
+    await notifyEveryPressSubscribers(type, now);
+  } catch (pushError) {
+    console.error("Push bei Knopfdruck fehlgeschlagen:", pushError);
   }
 
   return NextResponse.json({ success: true, type });

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.0 – 2026-09-27
+- Neu: "Meine Benachrichtigungen" – jede Person stellt ihre eigenen Benachrichtigungen ein (an/aus, automatische oder feste Uhrzeit)
+- Neu: Auf Wunsch eine Nachricht bei jedem Knopfdruck von Opa
+- Abends wird jetzt jede Person zu ihrer eigenen Zeit benachrichtigt statt nacheinander
+
 ## 1.6.1 – 2026-09-26
 - Fix: Knopf löst nicht mehr fälschlich beim Einstecken des Netzteils aus
 

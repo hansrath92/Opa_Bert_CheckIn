@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getBerlinTimeLabel } from "@/lib/press";
 
 // Erst bei tatsächlichem Bedarf aufrufen, nicht beim Laden des Moduls:
 // web-push wirft sofort einen Fehler, wenn die Keys fehlen/leer sind - das
@@ -24,13 +25,17 @@ export type Contact = {
   tolerance_hours: number;
 };
 
-// Liefert alle Kontakte, sortiert nach ihrer eigenen Toleranz-Zeit (aufsteigend).
-// Diese Reihenfolge bestimmt sowohl, wer beim ersten Alarm zuerst kontaktiert wird,
-// als auch die Eskalations-Reihenfolge danach.
+// Liefert die Kontakte für die MORGEN-Eskalationskette, sortiert nach ihrer
+// eigenen Toleranz-Zeit (aufsteigend). Diese Reihenfolge bestimmt, wer zuerst
+// kontaktiert wird und wie es danach weitergeht. Wer den Master-Schalter oder
+// "bei verpasstem Check-in" ausgeschaltet hat, ist nicht in der Kette.
+// (Abends gibt es keine Kette mehr - siehe processEvening im check-alarm-Cron.)
 export async function getContactsByPriority(): Promise<Contact[]> {
   const { data, error } = await supabaseAdmin
     .from("contacts")
     .select("id, name, tolerance_hours")
+    .eq("notifications_enabled", true)
+    .eq("notify_on_missed_checkin", true)
     .order("tolerance_hours", { ascending: true });
 
   if (error) throw new Error(error.message);
@@ -43,9 +48,32 @@ function messageFor(type: IncidentType): string {
     : "Opa hat sich heute Abend noch nicht gemeldet. Bitte melde dich in der App zurück.";
 }
 
+// Alarm-Nachricht "Opa hat sich nicht gemeldet" an einen Kontakt.
+export async function notifyContact(contactId: string, type: IncidentType): Promise<void> {
+  await sendPushToContact(contactId, messageFor(type));
+}
+
+// Opt-in-Nachricht bei JEDEM Knopfdruck an alle, die notify_on_every_press
+// UND den Master-Schalter an haben. Fehler bei einzelnen Personen blockieren
+// die anderen nicht (allSettled).
+export async function notifyEveryPressSubscribers(type: IncidentType, pressedAt: Date): Promise<void> {
+  const { data: contacts, error } = await supabaseAdmin
+    .from("contacts")
+    .select("id")
+    .eq("notifications_enabled", true)
+    .eq("notify_on_every_press", true);
+
+  if (error) throw new Error(error.message);
+
+  const what = type === "morning" ? "aufgestanden" : "Tür zu";
+  const body = `Opa hat sich gemeldet: ${what} um ${getBerlinTimeLabel(pressedAt)} Uhr`;
+
+  await Promise.allSettled((contacts ?? []).map((contact) => sendPushToContact(contact.id, body)));
+}
+
 // Schickt eine Push-Nachricht an ALLE Geräte, mit denen sich dieser eine Kontakt
 // registriert hat (jemand kann z.B. Handy + Tablet abonniert haben).
-export async function notifyContact(contactId: string, type: IncidentType): Promise<void> {
+async function sendPushToContact(contactId: string, body: string): Promise<void> {
   ensureVapidConfigured();
 
   const { data: subscriptions, error } = await supabaseAdmin
@@ -55,7 +83,7 @@ export async function notifyContact(contactId: string, type: IncidentType): Prom
 
   if (error) throw new Error(error.message);
 
-  const payload = JSON.stringify({ title: "Opa-Checkin", body: messageFor(type) });
+  const payload = JSON.stringify({ title: "Opa-Checkin", body });
 
   const results = await Promise.allSettled(
     (subscriptions ?? []).map((sub) =>

@@ -35,8 +35,9 @@ const STEPS: Step[] = [
   {
     path: "/einstellungen",
     target: "notifications",
-    title: "Benachrichtigungen",
-    description: "Hier aktivierst du Push-Benachrichtigungen und findest diesen Rundgang jederzeit wieder.",
+    title: "Meine Benachrichtigungen",
+    description:
+      "Hier aktivierst du Push und stellst ein, wann du benachrichtigt wirst – nur für dich. Den Rundgang findest du hier jederzeit wieder.",
   },
 ];
 

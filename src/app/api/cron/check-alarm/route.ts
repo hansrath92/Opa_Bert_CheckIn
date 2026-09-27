@@ -9,9 +9,15 @@ import {
   getContactsByPriority,
   notifyContact,
 } from "@/lib/escalation";
+import {
+  NOTIFICATION_SETTINGS_COLUMNS,
+  NotificationSettings,
+  getPersonalEveningDeadline,
+  wantsMissedCheckinAlerts,
+} from "@/lib/notification-settings";
 
 // Nach wie vielen Minuten ohne Rückmeldung (oder bei "nicht erreicht") zum
-// nächsten Kontakt in der Prioritäts-Liste weitergegangen wird.
+// nächsten Kontakt in der Prioritäts-Liste weitergegangen wird (nur morgens).
 const ESCALATION_TIMEOUT_MINUTES = 60;
 // Feste Morgen-Grenze (im Gegensatz zum Abend, der vom Sonnenuntergang abhängt).
 const MORNING_DEADLINE_HOUR = 11;
@@ -96,6 +102,91 @@ async function processIncidentType(
   return { type, status: "eskaliert", kontaktiert: nextContact.name };
 }
 
+type EveningContact = NotificationSettings & { id: string; name: string };
+
+// ABENDS: keine Kette mehr, sondern pro Person. Jede Person mit Master-Schalter
+// + "bei verpasstem Check-in" an wird zu IHRER persönlichen Zeit benachrichtigt
+// (automatisch = Sonnenuntergang + eigene Stunden, oder feste Uhrzeit) - und
+// zwar nur EINMAL pro Tag. Wer schon benachrichtigt wurde, steht als Zeile in
+// incident_contacts; dadurch bekommt er beim nächsten Cron-Lauf nichts mehr.
+// Hat jemand "Ich habe ihn getroffen" gemeldet (Vorfall "resolved") oder ist
+// der Abend-Druck da, bekommt niemand mehr etwas.
+async function processEvening(now: Date, todayKey: string, hasEveningPress: boolean) {
+  const { data: existingIncident, error: incidentError } = await supabaseAdmin
+    .from("incidents")
+    .select("id, status")
+    .eq("date_key", todayKey)
+    .eq("type", "evening")
+    .maybeSingle();
+  if (incidentError) throw new Error(incidentError.message);
+
+  if (existingIncident?.status === "resolved") {
+    return { type: "evening", status: "bereits gelöst" };
+  }
+
+  if (hasEveningPress) {
+    // Druck kam, nachdem der Vorfall schon eröffnet war -> jetzt schließen.
+    if (existingIncident) {
+      await supabaseAdmin.from("incidents").update({ status: "resolved" }).eq("id", existingIncident.id);
+      return { type: "evening", status: "gelöst durch Abend-Druck" };
+    }
+    return { type: "evening", status: "ok" };
+  }
+
+  const { data: contacts, error: contactsError } = await supabaseAdmin
+    .from("contacts")
+    .select(`id, name, ${NOTIFICATION_SETTINGS_COLUMNS}`)
+    .returns<EveningContact[]>();
+  if (contactsError) throw new Error(contactsError.message);
+
+  const sunset = await getSunsetTimeUTC(now);
+  const due = (contacts ?? []).filter(
+    (c) => wantsMissedCheckinAlerts(c) && now >= getPersonalEveningDeadline(c, sunset, now)
+  );
+
+  if (due.length === 0) {
+    return { type: "evening", status: "noch niemand an der Reihe" };
+  }
+
+  // Vorfall beim ersten fälligen Kontakt anlegen (danach wiederverwenden).
+  let incidentId = existingIncident?.id;
+  if (!incidentId) {
+    const { data: newIncident, error: createError } = await supabaseAdmin
+      .from("incidents")
+      .insert({ date_key: todayKey, type: "evening", status: "open" })
+      .select("id")
+      .single();
+    if (createError) throw new Error(createError.message);
+    incidentId = newIncident.id;
+  }
+
+  const { data: alreadyNotified, error: stepsError } = await supabaseAdmin
+    .from("incident_contacts")
+    .select("contact_id")
+    .eq("incident_id", incidentId);
+  if (stepsError) throw new Error(stepsError.message);
+
+  const notifiedIds = new Set((alreadyNotified ?? []).map((row) => row.contact_id));
+  const toNotify = due.filter((c) => !notifiedIds.has(c.id));
+
+  for (const contact of toNotify) {
+    // Erst eintragen, dann senden: Falls das Senden scheitert, wird trotzdem
+    // nicht bei jedem Cron-Lauf erneut versucht (einmal pro Tag).
+    await supabaseAdmin.from("incident_contacts").insert({ incident_id: incidentId, contact_id: contact.id });
+    try {
+      await notifyContact(contact.id, "evening");
+    } catch (error) {
+      console.error(`Push an ${contact.name} fehlgeschlagen:`, error);
+    }
+  }
+
+  return {
+    type: "evening",
+    status: toNotify.length > 0 ? "benachrichtigt" : "alle Fälligen schon benachrichtigt",
+    benachrichtigt: toNotify.map((c) => c.name),
+  };
+}
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -105,10 +196,8 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const todayKey = getBerlinDateKey(now);
 
+  // Nur für den MORGEN (Kette); abends lädt processEvening selbst alle Kontakte.
   const contacts = await getContactsByPriority();
-  if (contacts.length === 0) {
-    return NextResponse.json({ status: "keine Kontakte hinterlegt" });
-  }
 
   const { data: presses, error: pressesError } = await supabaseAdmin
     .from("presses")
@@ -125,27 +214,21 @@ export async function GET(request: NextRequest) {
     );
 
   try {
+    // MORGENS unverändert: Eskalationskette ab 11 Uhr.
     const morningDeadline = getBerlinTimeAsUTC(now, MORNING_DEADLINE_HOUR, 0);
-    const morningResult = await processIncidentType(
-      "morning",
-      morningDeadline,
-      now,
-      todayKey,
-      hasPressTodayOfType("morning"),
-      contacts
-    );
+    const morningResult =
+      contacts.length === 0
+        ? { type: "morning", status: "keine Kontakte mit aktiven Benachrichtigungen" }
+        : await processIncidentType(
+            "morning",
+            morningDeadline,
+            now,
+            todayKey,
+            hasPressTodayOfType("morning"),
+            contacts
+          );
 
-    const sunset = await getSunsetTimeUTC(now);
-    const minToleranceHours = contacts[0].tolerance_hours;
-    const eveningDeadline = new Date(sunset.getTime() + minToleranceHours * 60 * 60 * 1000);
-    const eveningResult = await processIncidentType(
-      "evening",
-      eveningDeadline,
-      now,
-      todayKey,
-      hasPressTodayOfType("evening"),
-      contacts
-    );
+    const eveningResult = await processEvening(now, todayKey, hasPressTodayOfType("evening"));
 
     return NextResponse.json({ morning: morningResult, evening: eveningResult });
   } catch (error) {

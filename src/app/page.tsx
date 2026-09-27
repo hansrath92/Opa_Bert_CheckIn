@@ -17,7 +17,8 @@ type Press = {
 
 type Incident = {
   type: "morning" | "evening";
-  contactName: string | null;
+  // Morgens max. ein Name (Kette), abends evtl. mehrere (jeder zu seiner Zeit)
+  contactNames: string[];
 };
 
 function StatusCard({ label, press }: { label: string; press: Press | null }) {
@@ -244,7 +245,8 @@ export default function Home() {
             >
               <div>
                 <p className="font-medium">
-                  {incident.type === "morning" ? "Morgens" : "Abends"}: {incident.contactName} wurde kontaktiert
+                  {incident.type === "morning" ? "Morgens" : "Abends"}: {incident.contactNames.join(", ")}{" "}
+                  {incident.contactNames.length > 1 ? "wurden" : "wurde"} kontaktiert
                 </p>
                 <p className="text-sm text-foreground-secondary">wartet auf Rückmeldung</p>
               </div>

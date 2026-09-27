@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: "gelöst" });
   }
 
-  // "could_not_reach" eskaliert zum nächsten Kontakt in der Kette - das
-  // ergibt nur Sinn für den gerade aktuell benachrichtigten Kontakt.
+  // "could_not_reach" eskaliert morgens zum nächsten Kontakt in der Kette -
+  // das ergibt nur Sinn für einen gerade benachrichtigten Kontakt.
   const { data: step, error: stepError } = await supabaseAdmin
     .from("incident_contacts")
     .select("id")
@@ -79,7 +79,16 @@ export async function POST(request: NextRequest) {
     .update({ responded_at: new Date().toISOString(), response })
     .eq("id", step.id);
 
+  // Abends gibt es keine Kette mehr: Jede Person wird ohnehin zu ihrer
+  // eigenen Zeit benachrichtigt - "nicht erreicht" wird nur vermerkt.
+  if (type === "evening") {
+    return NextResponse.json({ status: "vermerkt" });
+  }
+
   const contacts = await getContactsByPriority();
+  if (contacts.length === 0) {
+    return NextResponse.json({ status: "vermerkt, niemand weiter in der Kette" });
+  }
   const nextContact = await escalateToNextContact(incident.id, type, contacts, contact_id);
 
   return NextResponse.json({ status: "eskaliert", kontaktiert: nextContact.name });

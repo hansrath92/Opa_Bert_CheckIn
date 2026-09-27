@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSunsetTimeUTC } from "@/lib/sunset";
+import {
+  NOTIFICATION_SETTINGS_COLUMNS,
+  NotificationSettings,
+  getPersonalEveningDeadline,
+  wantsMissedCheckinAlerts,
+} from "@/lib/notification-settings";
 
 // Öffentlich (wie /api/contacts/list) - zeigt transparent, zu welcher Uhrzeit
-// heute jeder Kontakt (Sonnenuntergang + eigene Toleranz-Stunden) an der
-// Reihe wäre, falls die Meldung fehlt. Nur der erste in der Kette hat eine
-// wirklich garantierte Uhrzeit - alle weiteren hängen zusätzlich davon ab,
-// wie lange die Eskalation bis zu ihnen braucht (60 Min. pro Schritt) - das
-// wird hier bewusst nicht mitgerechnet, um es einfach und nachvollziehbar
-// zu halten.
+// heute jede Person benachrichtigt würde, falls der Abend-Druck fehlt. Jede
+// Person hat ihre eigene Zeit (automatisch = Sonnenuntergang + eigene Stunden,
+// oder feste Uhrzeit). Wer Benachrichtigungen bei verpasstem Check-in aus hat,
+// taucht hier nicht auf.
 export async function GET() {
   const now = new Date();
 
@@ -21,18 +25,21 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from("contacts")
-    .select("name, tolerance_hours")
-    .order("tolerance_hours", { ascending: true });
+    .select(`name, ${NOTIFICATION_SETTINGS_COLUMNS}`)
+    .returns<(NotificationSettings & { name: string })[]>();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const schedule = (data ?? []).map((contact) => ({
-    name: contact.name,
-    tolerance_hours: contact.tolerance_hours,
-    deadline: new Date(sunset.getTime() + contact.tolerance_hours * 60 * 60 * 1000).toISOString(),
-  }));
+  const schedule = (data ?? [])
+    .filter(wantsMissedCheckinAlerts)
+    .map((contact) => ({
+      name: contact.name,
+      mode: contact.missed_checkin_timing_mode,
+      deadline: getPersonalEveningDeadline(contact, sunset, now).toISOString(),
+    }))
+    .sort((a, b) => a.deadline.localeCompare(b.deadline));
 
   return NextResponse.json({ sunset: sunset.toISOString(), schedule });
 }
