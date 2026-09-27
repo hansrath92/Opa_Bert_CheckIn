@@ -302,6 +302,7 @@ function PiStatusBereich() {
   return (
     <CollapsibleSection
       title="Pi bei Opa"
+      dataOnboarding="pi-status"
       summary={
         piLastSeenAt === null ? undefined : isPiOnline ? (
           <span className="rounded-full bg-success-bg px-2 py-0.5 text-xs font-medium text-success-text">Online</span>
@@ -338,7 +339,7 @@ function DesignBereich() {
   }
 
   return (
-    <CollapsibleSection title="Design" summary={theme === "dark" ? "Dunkel" : "Hell"}>
+    <CollapsibleSection title="Design" dataOnboarding="design" summary={theme === "dark" ? "Dunkel" : "Hell"}>
       <div className="flex flex-col gap-2 p-4">
         <label className="flex items-center gap-2 text-sm">
           <input type="radio" name="theme" checked={theme === "light"} onChange={() => choose("light")} />

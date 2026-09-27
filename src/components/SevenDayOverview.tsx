@@ -104,7 +104,7 @@ export default function SevenDayOverview({ presses, standDowns }: { presses: Pre
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-4">
+    <div data-onboarding="week-overview" className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-card p-4">
       <div className="flex justify-between gap-1">
         {dayKeys.map((dayKey) => (
           <button

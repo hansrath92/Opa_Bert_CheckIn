@@ -7,6 +7,14 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.10.0",
+    date: "2026-09-27",
+    changes: [
+      "Erste-Schritte-Rundgang deutlich ausführlicher: erklärt jetzt Schritt für Schritt die ganze App (12 statt 4 Stationen), mit Zurück-Möglichkeit",
+      "Was ist neu zeigt jetzt immer nur die allerletzte Version, nicht mehr alle übersprungenen auf einmal",
+    ],
+  },
+  {
     version: "1.9.1",
     date: "2026-09-27",
     changes: ["Pi: automatischer nächtlicher Neustart (3 Uhr) gegen einen gelegentlich lautlos hängenbleibenden Piepton"],
@@ -189,11 +197,16 @@ export const CHANGELOG: ChangelogEntry[] = [
 
 export const CURRENT_VERSION = CHANGELOG[0].version;
 
-// Liefert alle Changelog-Einträge, die seit "lastSeenVersion" neu sind.
+// Liefert für das "Was ist neu"-Popup IMMER nur die allerletzte Version,
+// nie die komplette Liste seit "lastSeenVersion" - wer die App z.B. drei
+// Wochen nicht geöffnet hat, soll nicht mit fünf Versionen auf einmal
+// überschüttet werden, sondern nur sehen, was sich zuletzt getan hat.
+// (localStorage wird trotzdem auf CURRENT_VERSION gesetzt, übersprungene
+// Versionen werden also nicht nachträglich einzeln nachgezeigt.)
 // Unbekannte Version (z.B. ganz neue Person) -> keine Einträge, kein Popup.
 export function getChangesSince(lastSeenVersion: string | null): ChangelogEntry[] {
   if (lastSeenVersion === CURRENT_VERSION) return [];
   const index = CHANGELOG.findIndex((entry) => entry.version === lastSeenVersion);
   if (index === -1) return [];
-  return CHANGELOG.slice(0, index);
+  return CHANGELOG.slice(0, 1);
 }

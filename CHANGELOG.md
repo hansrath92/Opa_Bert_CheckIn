@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.0 – 2026-09-27
+- Erste-Schritte-Rundgang deutlich ausführlicher: erklärt jetzt Schritt für Schritt die ganze App (12 statt 4 Stationen), mit "Zurück"-Möglichkeit
+- "Was ist neu" zeigt jetzt immer nur die allerletzte Version, nicht mehr alle übersprungenen auf einmal
+
 ## 1.9.1 – 2026-09-27
 - Pi: automatischer nächtlicher Neustart (3 Uhr) gegen einen gelegentlich lautlos hängenbleibenden Piepton
 

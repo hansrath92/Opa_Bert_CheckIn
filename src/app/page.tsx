@@ -263,7 +263,7 @@ export default function Home() {
           {/* Aufklappbarer Tages-Verlauf, zusätzlich zum separaten Verlauf-Tab -
               zeigt jeden heutigen Druck einzeln mit Uhrzeit. */}
           {todaysPresses.length > 0 && (
-            <CollapsibleSection title={`Heute ${todaysPresses.length}x gedrückt – Verlauf`}>
+            <CollapsibleSection title={`Heute ${todaysPresses.length}x gedrückt – Verlauf`} dataOnboarding="today-history">
               {[...todaysPresses]
                 .sort((a, b) => a.created_at.localeCompare(b.created_at))
                 .map((press, index) => (
@@ -281,6 +281,7 @@ export default function Home() {
             <>
               <a
                 href={`tel:${OPA_PHONE_NUMBER}`}
+                data-onboarding="call"
                 className="flex min-h-[56px] items-center justify-center gap-2 bg-accent p-4 text-lg font-semibold text-white active:bg-accent-hover"
                 style={{ borderRadius: "var(--radius-card)" }}
               >
@@ -344,7 +345,7 @@ export default function Home() {
             <>
               <SevenDayOverview presses={presses} standDowns={standDowns} />
 
-              <div className="flex flex-col gap-4">
+              <div data-onboarding="press-cards" className="flex flex-col gap-4">
                 <StatusCard label={PRESS_LABEL.morning} press={morning} lastPress={lastMorningPress} />
                 <StatusCard label={PRESS_LABEL.evening} press={evening} lastPress={lastEveningPress} />
               </div>
@@ -381,6 +382,7 @@ export default function Home() {
           {!hasOpenIncident && (
             <a
               href={`tel:${OPA_PHONE_NUMBER}`}
+              data-onboarding="call"
               className="flex min-h-[56px] items-center justify-center gap-2 border-2 border-accent bg-card p-4 text-lg font-semibold text-accent"
               style={{ borderRadius: "var(--radius-card)" }}
             >
