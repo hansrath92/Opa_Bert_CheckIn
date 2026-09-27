@@ -7,6 +7,11 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.8.1",
+    date: "2026-09-27",
+    changes: ["Pi-Online-Status ist von Heute in die Einstellungen umgezogen"],
+  },
+  {
     version: "1.8.0",
     date: "2026-09-27",
     changes: [

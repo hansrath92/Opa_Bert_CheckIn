@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { getPushSubscriptionStatus, subscribeToPush } from "@/lib/push";
 import { getBerlinTimeLabel } from "@/lib/press";
 import { CHANGELOG } from "@/lib/changelog";
@@ -295,6 +296,61 @@ function MeineBenachrichtigungenBereich() {
   );
 }
 
+// Nach zwei verpassten Heartbeats (Pi sendet alle 5 Minuten) gilt er als offline.
+const PI_OFFLINE_THRESHOLD_MINUTES = 10;
+
+// Zeigt, ob der Pi bei Opa gerade online ist ("Lebenszeichen" des Pi selbst,
+// unabhängig von Knopfdrücken). Vorher stand das auf "Heute" oben rechts,
+// jetzt nur noch hier in den Einstellungen.
+function PiStatusBereich() {
+  const [piLastSeenAt, setPiLastSeenAt] = useState<Date | null>(null);
+  // "Jetzt" wird bei jedem Poll mit-gespeichert statt Date.now() beim Rendern
+  // aufzurufen - so bleibt die Berechnung unten eine reine Funktion des States.
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      const { data } = await supabase.from("pi_heartbeat").select("last_seen_at").eq("id", 1).maybeSingle();
+      if (cancelled) return;
+      if (data) setPiLastSeenAt(new Date(data.last_seen_at));
+      setNow(new Date());
+    }
+
+    load();
+    const intervalId = setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const piMinutesAgo = piLastSeenAt && now ? (now.getTime() - piLastSeenAt.getTime()) / (60 * 1000) : null;
+  const isPiOnline = piMinutesAgo !== null && piMinutesAgo < PI_OFFLINE_THRESHOLD_MINUTES;
+
+  return (
+    <CollapsibleSection
+      title="Pi bei Opa"
+      summary={
+        piLastSeenAt === null ? undefined : isPiOnline ? (
+          <span className="rounded-full bg-success-bg px-2 py-0.5 text-xs font-medium text-success-text">Online</span>
+        ) : (
+          <span className="rounded-full bg-warning-bg px-2 py-0.5 text-xs font-medium text-warning">Offline</span>
+        )
+      }
+    >
+      <div className="p-4 text-sm text-foreground-secondary">
+        {piLastSeenAt === null
+          ? "Lade…"
+          : `Zuletzt gemeldet um ${getBerlinTimeLabel(piLastSeenAt, { seconds: true })} Uhr${
+              isPiOnline ? "" : " – seit mehr als 10 Minuten kein Lebenszeichen mehr."
+            }`}
+      </div>
+    </CollapsibleSection>
+  );
+}
+
 function KontaktUndAlarmBereich() {
   const contact = useContact();
   const logout = useLogout();
@@ -530,6 +586,7 @@ export default function EinstellungenPage() {
     <main className="flex flex-1 flex-col gap-4 px-6 py-6">
       <h1 className="text-2xl font-semibold">Einstellungen</h1>
       <KontaktUndAlarmBereich />
+      <PiStatusBereich />
       <ErinnerungszeitenHeuteBereich />
       <FamilieBereich />
       <SoFunktioniertsBereich />

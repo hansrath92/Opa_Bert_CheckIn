@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.8.1 – 2026-09-27
+- Pi-Online-Status ist von "Heute" in die Einstellungen umgezogen
+
 ## 1.8.0 – 2026-09-27
 - Neues Design: warmes Beige/Grün statt Teal, besser lesbare Schrift (Atkinson Hyperlegible)
 - Neue Namen: "Guten Morgen" / "Gute Nacht" statt "aufgestanden" / "Tür zu"

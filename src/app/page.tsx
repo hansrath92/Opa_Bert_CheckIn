@@ -7,9 +7,6 @@ import { OPA_PHONE_NUMBER } from "@/lib/opa";
 import { PRESS_LABEL } from "@/lib/naming";
 import { useContact } from "@/components/IdentityGate";
 
-// Nach zwei verpassten Heartbeats (Pi sendet alle 5 Minuten) gilt er als offline.
-const PI_OFFLINE_THRESHOLD_MINUTES = 10;
-
 // Anzeige-Startwert für das "Gute Nacht"-Zeitfenster (Redesign v2, Abschnitt 6:
 // "Zeitlogik-Hybrid"). Rein informativ/fest gewählt - die Backend-Regel dahinter
 // bleibt unverändert die dynamische Sonnenuntergangs+Toleranz-Berechnung, die
@@ -54,7 +51,6 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [openIncidents, setOpenIncidents] = useState<Incident[]>([]);
-  const [piLastSeenAt, setPiLastSeenAt] = useState<Date | null>(null);
   const [reminderStatus, setReminderStatus] = useState<"idle" | "sending">("idle");
   const [buzzerActiveSince, setBuzzerActiveSince] = useState<Date | null>(null);
   const [metOpaStatus, setMetOpaStatus] = useState<"idle" | "sending" | "sent">("idle");
@@ -99,12 +95,9 @@ export default function Home() {
         // Eskalationsstatus ist informativ, ein Fehler hier blockiert die Hauptanzeige nicht
       }
 
-      const { data: heartbeat } = await supabase
-        .from("pi_heartbeat")
-        .select("last_seen_at")
-        .eq("id", 1)
-        .maybeSingle();
-      if (heartbeat) setPiLastSeenAt(new Date(heartbeat.last_seen_at));
+      // Pi-Online-Status wird nicht mehr hier auf "Heute" angezeigt, sondern
+      // nur noch in den Einstellungen (siehe PiStatusBereich dort) - deshalb
+      // wird der Heartbeat auf dieser Seite gar nicht mehr abgefragt.
 
       try {
         const buzzerResponse = await fetch("/api/buzzer-live-status");
@@ -196,26 +189,13 @@ export default function Home() {
   }
 
   const hasOpenIncident = openIncidents.length > 0;
-  const piMinutesAgo = piLastSeenAt ? (Date.now() - piLastSeenAt.getTime()) / (60 * 1000) : null;
-  const isPiOnline = piMinutesAgo !== null && piMinutesAgo < PI_OFFLINE_THRESHOLD_MINUTES;
   const isBuzzerActive = buzzerActiveSince !== null;
 
   return (
     <main className="flex flex-1 flex-col gap-4 px-6 py-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Heute</h1>
-          <p className="text-xs text-foreground-secondary">Angemeldet als {contact.name}</p>
-        </div>
-        {piLastSeenAt && (
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
-              isPiOnline ? "bg-success-bg text-success-text" : "bg-warning-bg text-warning"
-            }`}
-          >
-            {isPiOnline ? "● Pi online" : "○ Pi offline"}
-          </span>
-        )}
+      <div>
+        <h1 className="text-2xl font-semibold">Heute</h1>
+        <p className="text-xs text-foreground-secondary">Angemeldet als {contact.name}</p>
       </div>
 
       {isInitialLoading ? (
