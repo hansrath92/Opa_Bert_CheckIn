@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.7.2 – 2026-09-27
+- Pi-Online-Status ist von "Heute" in die Einstellungen umgezogen
+
 ## 1.7.1 – 2026-09-27
 - App heißt jetzt "Lebenszeichen" statt "Opa-Checkin" (Titel, Homescreen-Icon, Push-Nachrichten)
 
