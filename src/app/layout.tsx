@@ -14,9 +14,17 @@ const atkinsonHyperlegible = Atkinson_Hyperlegible({
 });
 
 export const metadata: Metadata = {
-  title: "Opa-Checkin",
+  // Sichtbarer Name für Nutzer (Browser-Tab, iOS-Homescreen) - der
+  // Projektname im Repo/package.json und die Vercel-URL bleiben bewusst
+  // "Opa-Checkin"/"opa-bert-check-in", das hier ist nur die Außenbenennung.
+  title: "Lebenszeichen",
   description: "Check-in App für Opa",
   manifest: "/manifest.json",
+  // Eigener iOS-Homescreen-Name, unabhängig vom manifest.json short_name -
+  // ohne dieses Feld würde Safari sonst ggf. auf den <title> zurückfallen.
+  appleWebApp: {
+    title: "Lebenszeichen",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
