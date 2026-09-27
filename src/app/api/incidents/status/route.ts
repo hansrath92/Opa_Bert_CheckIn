@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getBerlinDateKey } from "@/lib/press";
 
+// Ohne Cookies/Header/URL-Parameter würde Next.js dieses GET sonst als
+// statisch behandeln und EINMAL cachen - danach bliebe der Alarm-Status auf
+// dem Dashboard eingefroren, selbst nach vollständigem Neuladen der Seite
+// und selbst wenn der Vorfall in der Datenbank längst aufgelöst ist.
+export const dynamic = "force-dynamic";
+
 type Step = {
   contact_id: string;
   notified_at: string;

@@ -7,6 +7,15 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.11.1",
+    date: "2026-09-27",
+    changes: [
+      "Fix: Status-Kachel zeigte direkt nach Mitternacht fälschlich schon Gute Nacht kommt noch statt Guten Morgen kommt noch",
+      "Fix: Ein echter Knopfdruck löste einen offenen Abend-Alarm zwar in der Datenbank auf, das Dashboard blieb aber auch nach Neuladen hängen",
+      "Neu: Löst ein echter Druck einen offenen Alarm auf, bekommen alle bereits benachrichtigten Personen eine Info-Push (Opa hat sich gerade gemeldet - alles gut)",
+    ],
+  },
+  {
     version: "1.11.0",
     date: "2026-09-27",
     changes: ["Neu: In Erinnerungszeiten heute springt Bearbeiten bei deiner eigenen Zeile direkt zu Meine Benachrichtigungen"],

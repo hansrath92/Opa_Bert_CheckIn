@@ -6,6 +6,11 @@ import { computeBuzzerState } from "@/lib/buzzer";
 // Für das Dashboard (Heute-Seite) - kein PI_API_SECRET nötig, die Seite ist
 // durch middleware.ts ohnehin nur eingeloggt erreichbar. Liefert zusätzlich
 // zu "shouldBuzz" den frühesten Zeitpunkt, seit dem heute erinnert wird.
+// force-dynamic: ohne Cookies/Header/URL-Parameter würde Next.js dieses GET
+// sonst statisch cachen - "Opa wird erinnert" würde dann auf dem Dashboard
+// nicht mehr live aktualisieren.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const now = new Date();

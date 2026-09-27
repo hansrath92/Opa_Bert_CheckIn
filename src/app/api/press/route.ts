@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getBerlinDateKey, getPressType } from "@/lib/press";
-import { notifyEveryPressSubscribers } from "@/lib/escalation";
+import { notifyEveryPressSubscribers, notifyLatePress } from "@/lib/escalation";
 
 export async function POST(request: NextRequest) {
   const apiKey = request.headers.get("x-api-key");
@@ -40,14 +40,34 @@ export async function POST(request: NextRequest) {
 
   // Abend-Druck -> offener Abend-Alarm ist erledigt, damit niemand mehr eine
   // "Opa hat sich nicht gemeldet"-Nachricht bekommt, dessen Zeit erst später
-  // kommt. (Der Cron prüft das auch, aber erst beim nächsten Lauf.)
+  // kommt. (Der Cron prüft das auch, aber erst beim nächsten Lauf.) Steht ein
+  // Vorfall offen, informieren wir zusätzlich alle, die dafür schon
+  // benachrichtigt wurden - Opa hat sich ja gerade selbst gemeldet.
   if (type === "evening") {
-    await supabaseAdmin
+    const { data: openIncident } = await supabaseAdmin
       .from("incidents")
-      .update({ status: "resolved" })
+      .select("id")
       .eq("date_key", getBerlinDateKey(now))
       .eq("type", "evening")
-      .eq("status", "open");
+      .eq("status", "open")
+      .maybeSingle();
+
+    if (openIncident) {
+      await supabaseAdmin.from("incidents").update({ status: "resolved" }).eq("id", openIncident.id);
+
+      try {
+        const { data: notifiedContacts } = await supabaseAdmin
+          .from("incident_contacts")
+          .select("contact_id")
+          .eq("incident_id", openIncident.id);
+        const contactIds = (notifiedContacts ?? []).map((row) => row.contact_id);
+        if (contactIds.length > 0) {
+          await notifyLatePress(contactIds, now);
+        }
+      } catch (pushError) {
+        console.error("Info-Push nach spätem Druck fehlgeschlagen:", pushError);
+      }
+    }
   }
 
   // Opt-in "bei jedem Knopfdruck benachrichtigen". Ein Fehler hier darf den

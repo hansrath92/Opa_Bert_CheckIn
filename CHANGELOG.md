@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.1 – 2026-09-27
+- Fix: Status-Kachel zeigte direkt nach Mitternacht fälschlich schon "Gute Nacht kommt noch" statt "Guten Morgen kommt noch"
+- Fix: Ein echter Knopfdruck löste einen noch offenen Abend-Alarm zwar in der Datenbank korrekt auf, das Dashboard blieb aber auch nach Neuladen auf "Alarm" hängen (mehrere Lese-Endpunkte wurden von Next.js fälschlich zwischengespeichert)
+- Neu: Löst ein echter Druck einen offenen Alarm auf, bekommen alle bereits benachrichtigten Personen zusätzlich eine Info-Push ("Opa hat sich gerade gemeldet - alles gut")
+
 ## 1.11.0 – 2026-09-27
 - Neu: In "Erinnerungszeiten heute" springt "Bearbeiten" bei deiner eigenen Zeile direkt zu "Meine Benachrichtigungen"
 

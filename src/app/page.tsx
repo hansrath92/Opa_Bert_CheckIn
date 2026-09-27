@@ -205,6 +205,10 @@ export default function Home() {
 
   const hasOpenIncident = openIncidents.length > 0;
   const isBuzzerActive = buzzerActiveSince !== null;
+  // "Gute Nacht" kommt erst dran, wenn "Guten Morgen" schon vorliegt - sonst
+  // zeigte die Kachel direkt nach Mitternacht fälschlich schon den Abend-
+  // Countdown an, obwohl der Morgen noch gar nicht passiert ist.
+  const morningPending = !morning;
   // "Gute Nacht" ist erst dann wirklich überfällig, wenn auch der Cron einen
   // Alarm eröffnet hat (hasOpenIncident) - bis dahin (auch nach der eigenen
   // Deadline, wegen der 15-Minuten-Prüflücke) zeigen wir noch die Wartezeit.
@@ -246,6 +250,16 @@ export default function Home() {
                 <div className="mt-1 text-sm font-normal opacity-80">
                   Hier nochmals antippen zum Stoppen der Erinnerung
                 </div>
+              </>
+            ) : morningPending ? (
+              <>
+                {PRESS_LABEL.morning} kommt noch
+                {lastMorningPress && (
+                  <div className="mt-1 text-xs font-normal opacity-80">
+                    {formatRelativeDayLabel(getBerlinDateKey(new Date(lastMorningPress.created_at)), todayKey)} hat er
+                    sich um {getBerlinTimeLabel(new Date(lastMorningPress.created_at))} Uhr gemeldet.
+                  </div>
+                )}
               </>
             ) : deadlinePending ? (
               <>

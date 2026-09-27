@@ -71,6 +71,15 @@ export async function notifyEveryPressSubscribers(type: IncidentType, pressedAt:
   await Promise.allSettled((contacts ?? []).map((contact) => sendPushToContact(contact.id, body)));
 }
 
+// Info-Push, wenn ein ECHTER Knopfdruck einen noch offenen Abend-Alarm
+// gegenstandslos macht - an alle, die für diesen Alarm schon benachrichtigt
+// wurden. Anders als notifyStandDown() (eine Person entscheidet "alles gut")
+// meldet sich hier Opa gerade selbst, deshalb eigener Text ohne Namen.
+export async function notifyLatePress(contactIds: string[], pressedAt: Date): Promise<void> {
+  const body = `Opa hat sich gerade gemeldet - alles gut (${getBerlinTimeLabel(pressedAt)} Uhr).`;
+  await Promise.allSettled(contactIds.map((contactId) => sendPushToContact(contactId, body)));
+}
+
 // Info-Push bei einer "Entwarnung" ("Alles in Ordnung - nur nicht gedrückt")
 // an alle ANDEREN Personen, die für den heutigen Abend-Alarm schon
 // benachrichtigt wurden - wer die Entwarnung selbst ausgelöst hat, braucht

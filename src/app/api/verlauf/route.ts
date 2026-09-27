@@ -5,6 +5,11 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 // Läuft über supabaseAdmin (statt direktem Client-Read wie zuvor), weil wir
 // hier zusätzlich den Namen des erinnernden Kontakts brauchen - und
 // contacts.name ist per RLS nicht öffentlich lesbar.
+// force-dynamic: ohne Cookies/Header/URL-Parameter würde Next.js dieses GET
+// sonst statisch cachen - ein neuer Druck würde dann weder im Verlauf-Tab
+// noch in der 7-Tage-Übersicht auf "Heute" auftauchen.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const { data: presses, error: pressesError } = await supabaseAdmin
     .from("presses")
