@@ -66,6 +66,12 @@ const STEPS: Step[] = [
     description: "Ein direkter Anruf bei Opa ist immer nur einen Fingertipp entfernt.",
   },
   {
+    path: "/",
+    title: "Wenn eine Meldung fehlt",
+    description:
+      "Weißt du, dass es Opa gutgeht, er aber einfach nicht gedrückt hat (z.B. beim Arzt)? Dann gibst du \"Alles in Ordnung\" - das stoppt den Piepser und informiert auch alle anderen, die schon benachrichtigt wurden.",
+  },
+  {
     path: "/verlauf",
     target: "verlauf-list",
     title: "Verlauf-Tab",
