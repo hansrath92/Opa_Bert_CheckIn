@@ -104,6 +104,35 @@ sudo systemctl restart opa-checkin.service
 
 ---
 
+## 3a. Automatischer nächtlicher Neustart (gegen hängende Buzzer-Threads)
+
+Der Buzzer-Thread ist schon zweimal lautlos hängengeblieben (kein Fehler im
+Log, Heartbeat lief unbeeinträchtigt weiter) - ein `restart` hat beide Male
+sofort geholfen. Statt darauf zu warten, dass es jemandem aus der Familie
+auffällt, startet ein systemd-Timer den Dienst automatisch jede Nacht um
+3 Uhr neu (lange nach dem Abend-Alarm, lange vor "Guten Morgen").
+
+**Einmalig einrichten** (nach `git pull`, siehe Abschnitt 6):
+```bash
+sudo cp ~/opa-checkin/pi/opa-checkin-restart.service /etc/systemd/system/
+sudo cp ~/opa-checkin/pi/opa-checkin-restart.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now opa-checkin-restart.timer
+```
+
+**Prüfen, wann der nächste Neustart geplant ist:**
+```bash
+systemctl list-timers opa-checkin-restart.timer
+```
+
+**Testweise sofort einmal auslösen** (statt bis 3 Uhr zu warten):
+```bash
+sudo systemctl start opa-checkin-restart.service
+sudo systemctl status opa-checkin.service
+```
+
+---
+
 ## 4. Logs (Protokolle) ansehen
 
 **Letzte 30 Zeilen anzeigen:**

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.9.1 – 2026-09-27
+- Pi: automatischer nächtlicher Neustart (3 Uhr) gegen einen gelegentlich lautlos hängenbleibenden Piepton
+
 ## 1.9.0 – 2026-09-27
 - "Heute" zeigt jetzt zusätzlich einen aufklappbaren Verlauf des heutigen Tages
 - Neu: 7-Tage-Übersicht mit Sonne/Mond, antippbar für Details zum jeweiligen Tag

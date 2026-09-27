@@ -1,0 +1,6 @@
+[Unit]
+Description=Opa-Checkin taeglicher Neustart (gegen haengende Buzzer-Threads)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl restart opa-checkin.service

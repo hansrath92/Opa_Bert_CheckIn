@@ -1,0 +1,12 @@
+[Unit]
+Description=Taeglicher Neustart von opa-checkin.service um 3 Uhr nachts
+
+[Timer]
+# 3 Uhr nachts: lange nach dem Abend-Alarm, lange vor "Guten Morgen".
+# RandomizedDelaySec verteilt den Neustart etwas, falls mehrere Pis/Geraete
+# denselben Timer nutzen wuerden - hier nicht noetig, schadet aber nicht.
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
