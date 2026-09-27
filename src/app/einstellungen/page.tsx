@@ -533,6 +533,11 @@ function SoFunktioniertsBereich() {
 
   return (
     <CollapsibleSection title="So funktioniert's">
+      <button onClick={startOnboarding} className="flex items-center justify-between gap-4 p-4 text-left text-sm font-medium">
+        Erste Schritte erneut ansehen
+        <span className="text-foreground-secondary">›</span>
+      </button>
+
       <div className="flex flex-col gap-1 p-4">
         <p className="text-sm font-medium">Der Button bei Opa</p>
         <p className="text-sm text-foreground-secondary">
@@ -585,11 +590,6 @@ function SoFunktioniertsBereich() {
           einen Tag für Details.
         </p>
       </div>
-
-      <button onClick={startOnboarding} className="flex items-center justify-between gap-4 p-4 text-left text-sm font-medium">
-        Erste Schritte erneut ansehen
-        <span className="text-foreground-secondary">›</span>
-      </button>
     </CollapsibleSection>
   );
 }

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.10.3 – 2026-09-27
+- "Erste Schritte erneut ansehen" steht jetzt gleich oben in "So funktioniert's", vor der ausführlichen Beschreibung
+
 ## 1.10.2 – 2026-09-27
 - Onboarding-Rundgang: neuer Schritt erklärt jetzt auch "Alles in Ordnung" (Entwarnung)
 
