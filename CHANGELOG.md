@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.10.4 – 2026-09-27
+- Fix: Onboarding-Erklärung deckte teilweise den gerade erklärten Button zu (z.B. bei "Opa erinnern"/"Opa anrufen") - zeigt jetzt oben statt unten an, wenn nötig
+
 ## 1.10.3 – 2026-09-27
 - "Erste Schritte erneut ansehen" steht jetzt gleich oben in "So funktioniert's", vor der ausführlichen Beschreibung
 

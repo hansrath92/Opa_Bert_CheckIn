@@ -113,6 +113,11 @@ export default function OnboardingTour({ onClose }: { onClose: () => void }) {
   const pathname = usePathname();
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
+  // Erklär-Leiste klebt normalerweise unten - steht das erklärte Element
+  // selbst in der unteren Bildschirmhälfte (z.B. "Opa erinnern"/"Opa
+  // anrufen" ganz unten auf "Heute"), würde sie es sonst zudecken. Dann
+  // zeigt sie stattdessen oben an.
+  const [sheetOnTop, setSheetOnTop] = useState(false);
   const step = STEPS[stepIndex];
   const isLast = stepIndex === STEPS.length - 1;
 
@@ -130,6 +135,7 @@ export default function OnboardingTour({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (pathname !== step.path || !step.target) {
       setRect(null);
+      setSheetOnTop(false);
       return;
     }
 
@@ -139,12 +145,20 @@ export default function OnboardingTour({ onClose }: { onClose: () => void }) {
     function measure() {
       const el = document.querySelector(`[data-onboarding="${target}"]`);
       if (!el) {
-        if (!cancelled) setRect(null);
+        if (!cancelled) {
+          setRect(null);
+          setSheetOnTop(false);
+        }
         return;
       }
       el.scrollIntoView({ block: "center", behavior: "auto" });
       const r = el.getBoundingClientRect();
-      if (!cancelled) setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+      if (!cancelled) {
+        setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+        // Element-Mitte unterhalb der Bildschirm-Mitte -> Leiste nach oben,
+        // sonst würde sie genau das erklärte Element überdecken.
+        setSheetOnTop(r.top + r.height / 2 > window.innerHeight / 2);
+      }
     }
 
     // Kurze Verzögerung, damit die Seite nach der Navigation fertig gerendert hat.
@@ -162,6 +176,7 @@ export default function OnboardingTour({ onClose }: { onClose: () => void }) {
       onClose();
     } else {
       setRect(null);
+      setSheetOnTop(false);
       setStepIndex((i) => i + 1);
     }
   }
@@ -169,6 +184,7 @@ export default function OnboardingTour({ onClose }: { onClose: () => void }) {
   function back() {
     if (stepIndex > 0) {
       setRect(null);
+      setSheetOnTop(false);
       setStepIndex((i) => i - 1);
     }
   }
@@ -194,8 +210,16 @@ export default function OnboardingTour({ onClose }: { onClose: () => void }) {
       )}
 
       <div
-        className="fixed inset-x-0 bottom-0 z-[52] flex flex-col gap-3 rounded-t-[var(--radius-tile)] border-t border-border bg-card p-6"
-        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+        className={`fixed inset-x-0 z-[52] flex flex-col gap-3 border-border bg-card p-6 ${
+          sheetOnTop
+            ? "top-0 rounded-b-[var(--radius-tile)] border-b"
+            : "bottom-0 rounded-t-[var(--radius-tile)] border-t"
+        }`}
+        style={
+          sheetOnTop
+            ? { paddingTop: "max(1.5rem, env(safe-area-inset-top))" }
+            : { paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }
+        }
       >
         <span className="text-xs font-medium text-foreground-secondary">
           Schritt {stepIndex + 1} von {STEPS.length}
