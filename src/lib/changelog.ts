@@ -7,6 +7,13 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.12.6",
+    date: "2026-09-27",
+    changes: [
+      "Fix: Opa erinnern wirkte nach einem bereits erfolgten Abend-Druck oder einer Entwarnung nicht mehr (kein Piepton, Anzeige sprang von selbst zurück) - funktioniert jetzt wie versprochen jederzeit",
+    ],
+  },
+  {
     version: "1.12.5",
     date: "2026-09-27",
     changes: ["Fix: Guten Morgen kommt noch verschwindet jetzt korrekt, sobald Gute Nacht schon gedrückt wurde"],

@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.12.6 – 2026-09-27
+- Fix: "Opa erinnern" wirkte nach einem bereits erfolgten Abend-Druck oder einer Entwarnung nicht mehr (kein Piepton, Anzeige sprang von selbst zurück) - der manuelle Auslöser funktioniert jetzt wie versprochen jederzeit
+
 ## 1.12.5 – 2026-09-27
 - Fix: "Guten Morgen kommt noch" verschwindet jetzt korrekt, sobald "Gute Nacht" schon gedrückt wurde, statt weiter fälschlich einen fehlenden Morgen anzumahnen
 

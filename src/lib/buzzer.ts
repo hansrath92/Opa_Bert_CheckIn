@@ -35,46 +35,47 @@ export async function computeBuzzerState(now: Date): Promise<BuzzerState> {
   let autoTriggeredAt: string | null = status?.auto_triggered_at ?? null;
 
   // Abend-Druck ODER Entwarnung ("Alles in Ordnung - nur nicht gedrückt") ->
-  // Buzzer ist in jedem Fall aus, egal was sonst gilt. Eine Entwarnung zählt
-  // dabei bewusst NICHT als echter Druck (siehe evening_press_time-Feld) -
-  // sie stoppt nur den Piepser, ohne einen Knopfdruck vorzutäuschen.
-  if (eveningPressTime !== null || eveningStoodDownAt !== null) {
-    return {
-      shouldBuzz: false,
-      timeConditionMet: false,
-      buzzerManuallyTriggered,
-      eveningPressTime,
-      autoTriggeredAt,
-      eveningStoodDownAt,
-      buzzerSnoozedAt,
-    };
+  // die AUTOMATISCHE Erinnerung ist für den Rest des Tages aus. Eine
+  // Entwarnung zählt dabei bewusst NICHT als echter Druck (siehe
+  // evening_press_time-Feld) - sie stoppt nur den Piepser, ohne einen
+  // Knopfdruck vorzutäuschen.
+  const dayIsDone = eveningPressTime !== null || eveningStoodDownAt !== null;
+
+  // Sonnenuntergang nur nachschlagen, wenn der Tag noch nicht erledigt ist -
+  // sonst unnötiger API-Aufruf.
+  let timeConditionMet = false;
+  if (!dayIsDone) {
+    const sunset = await getSunsetTimeUTC(now);
+    const autoDeadline = new Date(sunset.getTime() + AUTO_BUZZ_HOURS_AFTER_SUNSET * 60 * 60 * 1000);
+    timeConditionMet = now >= autoDeadline;
+
+    // Startzeitpunkt der automatischen Erinnerung einmalig festhalten (für die
+    // "seit wann piept es"-Anzeige auf Dashboard/Verlauf) - nicht bei jedem
+    // Poll-Zyklus neu überschreiben.
+    if (timeConditionMet && autoTriggeredAt === null) {
+      autoTriggeredAt = now.toISOString();
+      const { error: upsertError } = await supabaseAdmin
+        .from("daily_status")
+        .upsert({ date_key: todayKey, auto_triggered_at: autoTriggeredAt }, { onConflict: "date_key" });
+      if (upsertError) throw new Error(upsertError.message);
+    }
   }
 
-  const sunset = await getSunsetTimeUTC(now);
-  const autoDeadline = new Date(sunset.getTime() + AUTO_BUZZ_HOURS_AFTER_SUNSET * 60 * 60 * 1000);
-  const timeConditionMet = now >= autoDeadline;
-
-  // Startzeitpunkt der automatischen Erinnerung einmalig festhalten (für die
-  // "seit wann piept es"-Anzeige auf Dashboard/Verlauf) - nicht bei jedem
-  // Poll-Zyklus neu überschreiben.
-  if (timeConditionMet && autoTriggeredAt === null) {
-    autoTriggeredAt = now.toISOString();
-    const { error: upsertError } = await supabaseAdmin
-      .from("daily_status")
-      .upsert({ date_key: todayKey, auto_triggered_at: autoTriggeredAt }, { onConflict: "date_key" });
-    if (upsertError) throw new Error(upsertError.message);
-  }
-
-  // Bug-Fix: früher überstimmte die automatische Zeitbedingung jedes manuelle
-  // Stoppen, sobald sie einmal eingetreten war ("shouldBuzz: timeConditionMet
-  // || buzzerManuallyTriggered" - true bleibt true). Jetzt gilt: einmal
-  // bewusst gestoppt (buzzerSnoozedAt gesetzt), bleibt die automatische
-  // Bedingung für den Rest des Tages stumm, bis jemand den Buzzer über
-  // /api/buzzer-trigger wieder aktiv einschaltet (das löscht buzzerSnoozedAt).
-  const automaticStillActive = timeConditionMet && buzzerSnoozedAt === null;
+  // Bug-Fix (27.9.): "dayIsDone" hat bisher ALLES übersteuert, auch einen
+  // manuellen Trigger - nach einem Abend-Druck/einer Entwarnung blieb "Opa
+  // erinnern" wirkungslos (kein Piepen, die App sprang beim nächsten Poll
+  // von selbst zurück auf "aus"). "Opa erinnern" soll aber laut eigenem Text
+  // jederzeit einen Piepton auslösen können - deshalb gewinnt der manuelle
+  // Trigger jetzt IMMER, auch wenn der Tag schon erledigt ist. "dayIsDone"
+  // schaltet weiterhin nur die AUTOMATISCHE Erinnerung stumm.
+  //
+  // buzzerSnoozedAt (siehe Migration 0013): einmal bewusst gestoppt, bleibt
+  // die automatische Bedingung für den Rest des Tages stumm, bis jemand den
+  // Buzzer über /api/buzzer-trigger wieder aktiv einschaltet (löscht es wieder).
+  const automaticStillActive = !dayIsDone && timeConditionMet && buzzerSnoozedAt === null;
 
   return {
-    shouldBuzz: automaticStillActive || buzzerManuallyTriggered,
+    shouldBuzz: buzzerManuallyTriggered || automaticStillActive,
     timeConditionMet,
     buzzerManuallyTriggered,
     eveningPressTime,
