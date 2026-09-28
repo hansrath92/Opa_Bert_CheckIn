@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.12.2 – 2026-09-27
+- Vercel Speed Insights aktiviert, um die Ladegeschwindigkeit der App im Blick zu behalten
+
 ## 1.12.1 – 2026-09-27
 - "Heutiger Verlauf" auf "Heute" wieder entfernt (doppelt mit der 7-Tage-Übersicht)
 - Fix: "Erinnerung aktiv" konnte manchmal nicht gestoppt werden, weil die automatische Zeitbedingung ein manuelles Stoppen sofort wieder überstimmte - der Button hält jetzt sein Versprechen ein

@@ -7,6 +7,11 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.12.2",
+    date: "2026-09-27",
+    changes: ["Vercel Speed Insights aktiviert, um die Ladegeschwindigkeit der App im Blick zu behalten"],
+  },
+  {
     version: "1.12.1",
     date: "2026-09-27",
     changes: [
