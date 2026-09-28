@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0 – 2026-09-27
+- Neuer, sauberer Stand: alle Redesign-Branches gemerged und aufgeräumt, keine offenen Baustellen
+- Fasst das große Redesign der letzten Tage zusammen (neues Design, persönliche Benachrichtigungen, Entwarnung, Onboarding, zahlreiche Pi- und Bugfixes) - Details siehe die Einträge darunter
+
 ## 1.13.0 – 2026-09-27
 - Zwei Personen dürfen jetzt dieselbe PIN haben
 - Beitreten-Formular fragt nicht mehr nach der Erinnerungszeit (Standard: 2h) - das stellt jede Person danach selbst unter "Meine Benachrichtigungen" ein

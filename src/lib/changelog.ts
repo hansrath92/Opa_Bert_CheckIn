@@ -7,6 +7,18 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.0.0",
+    date: "2026-09-27",
+    changes: [
+      "Neues Design: warmes Beige/Grün, besser lesbare Schrift",
+      "Neue Namen: Guten Morgen / Gute Nacht statt aufgestanden / Tür zu",
+      "Jede Person stellt jetzt selbst ein, ob und wann sie benachrichtigt wird (Einstellungen → Meine Benachrichtigungen)",
+      "Neu: Entwarnung - falls es Opa gut geht, er aber nur nicht gedrückt hat",
+      "Neu: Hell/Dunkel-Umschalter in den Einstellungen",
+      "App heißt jetzt Lebenszeichen statt Opa-Checkin",
+    ],
+  },
+  {
     version: "1.13.0",
     date: "2026-09-27",
     changes: [
