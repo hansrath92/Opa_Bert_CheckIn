@@ -7,6 +7,13 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.0.2",
+    date: "2026-09-28",
+    changes: [
+      "Fix: Hatte Opa morgens nicht gedrückt (Alarm lief), löste ein späterer Gute-Nacht-Druck den Alarm nicht mehr auf - jeder echte Druck löst jetzt alle heute noch offenen Alarme auf, egal welcher Art",
+    ],
+  },
+  {
     version: "2.0.1",
     date: "2026-09-27",
     changes: [

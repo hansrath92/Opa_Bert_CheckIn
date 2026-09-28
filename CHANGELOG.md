@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.2 – 2026-09-28
+- Fix: Hatte Opa morgens nicht gedrückt (Alarm lief), löste ein späterer Gute-Nacht-Druck den Alarm nicht mehr auf - die Kachel blieb rot auf "Achtung", obwohl Opa sich abends klar gemeldet hat. Jeder echte Druck löst jetzt alle heute noch offenen Alarme auf, egal welcher Art
+
 ## 2.0.1 – 2026-09-27
 - Fix: "Heute" zeigte beim erneuten Öffnen (z.B. von Verlauf zurück) kurz fälschlich "Alles in Ordnung", bevor sich eine aktive Erinnerung/ein Alarm nachträglich zeigte - lädt jetzt alles gleichzeitig statt nacheinander, dadurch auch insgesamt schneller
 

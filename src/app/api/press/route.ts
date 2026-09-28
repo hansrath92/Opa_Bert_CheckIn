@@ -38,35 +38,36 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: dailyStatusError.message }, { status: 500 });
   }
 
-  // Abend-Druck -> offener Abend-Alarm ist erledigt, damit niemand mehr eine
-  // "Opa hat sich nicht gemeldet"-Nachricht bekommt, dessen Zeit erst später
-  // kommt. (Der Cron prüft das auch, aber erst beim nächsten Lauf.) Steht ein
-  // Vorfall offen, informieren wir zusätzlich alle, die dafür schon
-  // benachrichtigt wurden - Opa hat sich ja gerade selbst gemeldet.
-  if (type === "evening") {
-    const { data: openIncident } = await supabaseAdmin
-      .from("incidents")
-      .select("id")
-      .eq("date_key", getBerlinDateKey(now))
-      .eq("type", "evening")
-      .eq("status", "open")
-      .maybeSingle();
+  // Jeder echte Druck - egal ob Guten Morgen oder Gute Nacht - beweist, dass
+  // Opa gerade wohlauf und aktiv ist. Das macht JEDEN heute noch offenen
+  // Alarm gegenstandslos, nicht nur den zum selben Zeitpunkt: ein abendlicher
+  // Druck löst also auch einen zuvor verpassten Guten-Morgen-Alarm auf, und
+  // ein spät nachgeholter Guten-Morgen-Druck löst eine bereits laufende
+  // Eskalation ebenfalls auf. (Der Cron prüft das auch, aber erst beim
+  // nächsten Lauf.) Für jeden aufgelösten Vorfall informieren wir zusätzlich
+  // alle, die dafür schon benachrichtigt wurden - Opa hat sich ja gerade
+  // selbst gemeldet.
+  const { data: openIncidentsToday } = await supabaseAdmin
+    .from("incidents")
+    .select("id")
+    .eq("date_key", getBerlinDateKey(now))
+    .eq("status", "open");
 
-    if (openIncident) {
-      await supabaseAdmin.from("incidents").update({ status: "resolved" }).eq("id", openIncident.id);
+  if (openIncidentsToday && openIncidentsToday.length > 0) {
+    const incidentIds = openIncidentsToday.map((row) => row.id);
+    await supabaseAdmin.from("incidents").update({ status: "resolved" }).in("id", incidentIds);
 
-      try {
-        const { data: notifiedContacts } = await supabaseAdmin
-          .from("incident_contacts")
-          .select("contact_id")
-          .eq("incident_id", openIncident.id);
-        const contactIds = (notifiedContacts ?? []).map((row) => row.contact_id);
-        if (contactIds.length > 0) {
-          await notifyLatePress(contactIds, now);
-        }
-      } catch (pushError) {
-        console.error("Info-Push nach spätem Druck fehlgeschlagen:", pushError);
+    try {
+      const { data: notifiedContacts } = await supabaseAdmin
+        .from("incident_contacts")
+        .select("contact_id")
+        .in("incident_id", incidentIds);
+      const contactIds = [...new Set((notifiedContacts ?? []).map((row) => row.contact_id))];
+      if (contactIds.length > 0) {
+        await notifyLatePress(contactIds, now);
       }
+    } catch (pushError) {
+      console.error("Info-Push nach spätem Druck fehlgeschlagen:", pushError);
     }
   }
 
