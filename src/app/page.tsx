@@ -119,17 +119,18 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
-      // Presses + Entwarnungen kommen aus /api/verlauf (dieselbe Quelle wie
-      // der Verlauf-Tab) - evening_stand_downs ist per RLS nicht direkt vom
-      // Client lesbar, nur serverseitig über diese Route.
+    // Presses + Entwarnungen kommen aus /api/verlauf (dieselbe Quelle wie der
+    // Verlauf-Tab) - evening_stand_downs ist per RLS nicht direkt vom Client
+    // lesbar, nur serverseitig über diese Route.
+    async function loadVerlauf() {
       try {
-        const verlaufResponse = await fetch("/api/verlauf");
-        if (verlaufResponse.ok) {
-          const { presses: freshPresses, standDowns: freshStandDowns } = await verlaufResponse.json();
+        const response = await fetch("/api/verlauf");
+        if (response.ok) {
+          const { presses: freshPresses, standDowns: freshStandDowns } = await response.json();
           if (!cancelled) {
             setPresses(freshPresses ?? []);
             setStandDowns(freshStandDowns ?? []);
+            setError(null);
           }
         } else if (!cancelled) {
           setError("Laden fehlgeschlagen");
@@ -137,44 +138,62 @@ export default function Home() {
       } catch {
         if (!cancelled) setError("Laden fehlgeschlagen");
       }
+    }
 
-      if (cancelled) return;
-      setLastUpdated(new Date());
-      setNow(new Date());
-      setIsInitialLoading(false);
-
+    async function loadIncidents() {
       try {
-        const statusResponse = await fetch("/api/incidents/status");
-        if (statusResponse.ok) {
-          const { incidents } = await statusResponse.json();
-          setOpenIncidents(incidents ?? []);
+        const response = await fetch("/api/incidents/status");
+        if (response.ok) {
+          const { incidents } = await response.json();
+          if (!cancelled) setOpenIncidents(incidents ?? []);
         }
       } catch {
         // Eskalationsstatus ist informativ, ein Fehler hier blockiert die Hauptanzeige nicht
       }
+    }
 
+    async function loadBuzzer() {
       try {
-        const buzzerResponse = await fetch("/api/buzzer-live-status");
-        if (buzzerResponse.ok) {
-          const { shouldBuzz, activeSince, snoozedAt: snoozed } = await buzzerResponse.json();
-          setBuzzerActiveSince(shouldBuzz && activeSince ? new Date(activeSince) : null);
-          setSnoozedAt(snoozed ? new Date(snoozed) : null);
+        const response = await fetch("/api/buzzer-live-status");
+        if (response.ok) {
+          const { shouldBuzz, activeSince, snoozedAt: snoozed } = await response.json();
+          if (!cancelled) {
+            setBuzzerActiveSince(shouldBuzz && activeSince ? new Date(activeSince) : null);
+            setSnoozedAt(snoozed ? new Date(snoozed) : null);
+          }
         }
       } catch {
         // Live-Status ist informativ, ein Fehler hier blockiert die Hauptanzeige nicht
       }
+    }
 
-      // Persönliche Abend-Deadline GENAU dieses eingeloggten Nutzers (aus
-      // seinen eigenen Benachrichtigungs-Einstellungen, automatisch oder fest).
+    // Persönliche Abend-Deadline GENAU dieses eingeloggten Nutzers (aus seinen
+    // eigenen Benachrichtigungs-Einstellungen, automatisch oder fest).
+    async function loadDeadline() {
       try {
-        const scheduleResponse = await fetch(`/api/reminder-schedule?contact_id=${encodeURIComponent(contact.id)}`);
-        if (scheduleResponse.ok) {
-          const { myDeadline: deadline } = await scheduleResponse.json();
-          setMyDeadline(deadline ? new Date(deadline) : null);
+        const response = await fetch(`/api/reminder-schedule?contact_id=${encodeURIComponent(contact.id)}`);
+        if (response.ok) {
+          const { myDeadline: deadline } = await response.json();
+          if (!cancelled) setMyDeadline(deadline ? new Date(deadline) : null);
         }
       } catch {
         // Nur informativ, kein Blocker
       }
+    }
+
+    async function load() {
+      // Alle vier GLEICHZEITIG statt nacheinander laden. Vorher wurde die
+      // Seite schon nach der ersten Abfrage als "geladen" markiert, während
+      // Alarm-/Erinnerungs-Status noch mit ihren Startwerten dastanden - beim
+      // erneuten Mounten (z.B. Heute -> Verlauf -> Heute, React baut die Seite
+      // dann komplett neu auf) blitzte deshalb kurz "Alles in Ordnung" auf,
+      // bevor der tatsächliche Zustand eine Sekunde später nachkam. Parallel
+      // laden behebt das UND ist insgesamt schneller (eine Wartezeit statt vier).
+      await Promise.allSettled([loadVerlauf(), loadIncidents(), loadBuzzer(), loadDeadline()]);
+      if (cancelled) return;
+      setLastUpdated(new Date());
+      setNow(new Date());
+      setIsInitialLoading(false);
     }
 
     load();

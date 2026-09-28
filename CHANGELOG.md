@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.1 – 2026-09-27
+- Fix: "Heute" zeigte beim erneuten Öffnen (z.B. von Verlauf zurück) kurz fälschlich "Alles in Ordnung", bevor sich eine aktive Erinnerung/ein Alarm nachträglich zeigte - lädt jetzt alles gleichzeitig statt nacheinander, dadurch auch insgesamt schneller
+
 ## 2.0.0 – 2026-09-27
 - Neuer, sauberer Stand: alle Redesign-Branches gemerged und aufgeräumt, keine offenen Baustellen
 - Fasst das große Redesign der letzten Tage zusammen (neues Design, persönliche Benachrichtigungen, Entwarnung, Onboarding, zahlreiche Pi- und Bugfixes) - Details siehe die Einträge darunter
