@@ -7,6 +7,17 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.12.0",
+    date: "2026-09-27",
+    changes: [
+      "Status-Kachel auf Heute komplett neu aufgebaut: Icon, Titel und Untertext oben, darunter Guten-Morgen/Gute-Nacht als eigene farbige Zeilen direkt in der Kachel",
+      "Neue Wartend-Farbe für kommt noch-Zustände, getrennt von Grün (erledigt) und Orange (Alarm)",
+      "Heutiger Verlauf zeigt jetzt auch Erinnerungen und Entwarnungen mit farbigem Punkt, nicht mehr nur Knopfdrücke, und ist bei erledigtem Tag automatisch aufgeklappt",
+      "7-Tage-Übersicht: Sonne/Mond jetzt als gefüllte Kreise, ausführlicherer Detailtext inkl. Entwarnungs-Namen, Auswahl-Hervorhebung",
+      "Aufgelöster Zustand zeigt jetzt, wodurch: Entwarnung von Name oder Opa hat sich um HH:MM Uhr gemeldet",
+    ],
+  },
+  {
     version: "1.11.1",
     date: "2026-09-27",
     changes: [

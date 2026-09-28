@@ -33,10 +33,10 @@ const STEPS: Step[] = [
   },
   {
     path: "/",
-    target: "press-cards",
+    target: "status",
     title: "Guten Morgen & Gute Nacht",
     description:
-      "Ein Druck vor 12 Uhr zählt als \"Guten Morgen\", danach als \"Gute Nacht\". Hier siehst du, ob und wann Opa heute schon gedrückt hat.",
+      "Ein Druck vor 12 Uhr zählt als \"Guten Morgen\", danach als \"Gute Nacht\". Die beiden Zeilen in der Kachel zeigen, ob und wann Opa heute schon gedrückt hat.",
   },
   {
     path: "/",

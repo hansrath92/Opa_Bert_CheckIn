@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.12.0 – 2026-09-27
+- Status-Kachel auf "Heute" komplett neu aufgebaut: Icon, Titel und Untertext oben, darunter Guten-Morgen/Gute-Nacht als eigene farbige Zeilen direkt in der Kachel
+- Neue "Wartend"-Farbe für "kommt noch"-Zustände, getrennt von Grün (erledigt) und Orange (Alarm)
+- "Heutiger Verlauf" zeigt jetzt auch Erinnerungen und Entwarnungen mit farbigem Punkt, nicht mehr nur Knopfdrücke, und ist bei erledigtem Tag automatisch aufgeklappt
+- 7-Tage-Übersicht: Sonne/Mond jetzt als gefüllte Kreise, ausführlicherer Detailtext inkl. Entwarnungs-Namen, Auswahl-Hervorhebung
+- Aufgelöster Zustand zeigt jetzt, wodurch: "Entwarnung von [Name]" oder "Opa hat sich um HH:MM Uhr gemeldet"
+
 ## 1.11.1 – 2026-09-27
 - Fix: Status-Kachel zeigte direkt nach Mitternacht fälschlich schon "Gute Nacht kommt noch" statt "Guten Morgen kommt noch"
 - Fix: Ein echter Knopfdruck löste einen noch offenen Abend-Alarm zwar in der Datenbank korrekt auf, das Dashboard blieb aber auch nach Neuladen auf "Alarm" hängen (mehrere Lese-Endpunkte wurden von Next.js fälschlich zwischengespeichert)

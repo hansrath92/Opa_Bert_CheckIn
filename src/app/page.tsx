@@ -14,7 +14,7 @@ type Press = {
   created_at: string;
 };
 
-type StandDown = { created_at: string };
+type NamedEvent = { created_at: string; contact_name: string };
 
 type Incident = {
   type: "morning" | "evening";
@@ -25,28 +25,72 @@ type Incident = {
   pendingContactIds: string[];
 };
 
-// Zeigt den heutigen Druck, oder - falls noch keiner da ist - den letzten
-// bekannten (z.B. früh morgens noch die "Gute Nacht" von gestern Abend),
-// damit die Familie auch dann Kontext hat, wann zuletzt ein Lebenszeichen kam.
-function StatusCard({ label, press, lastPress }: { label: string; press: Press | null; lastPress: Press | null }) {
-  const todayKey = getBerlinDateKey(new Date());
+// Zustand einer einzelnen Guten-Morgen/Gute-Nacht-Zeile in der Status-Kachel -
+// unabhängig vom Gesamtzustand der Kachel, jede Zeile hat ihre eigene Farbe.
+type RowState = "done" | "waiting" | "missed" | "neutral";
+
+const ROW_COLORS: Record<RowState, { text: string; bg: string }> = {
+  done: { text: "text-success-text", bg: "bg-success-bg" },
+  waiting: { text: "text-info", bg: "bg-info-bg" },
+  missed: { text: "text-warning", bg: "bg-warning-bg" },
+  neutral: { text: "text-foreground-secondary", bg: "bg-neutral-bg" },
+};
+
+function SunGlyph() {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[var(--radius-card)] border border-border bg-card p-5">
-      <span className="shrink-0 whitespace-nowrap text-lg font-medium">{label}</span>
-      {press ? (
-        <span className="whitespace-nowrap rounded-full bg-success-bg px-3 py-1 text-lg font-semibold text-success-text">
-          ✓ {getBerlinTimeLabel(new Date(press.created_at))} Uhr
-        </span>
-      ) : lastPress ? (
-        <span className="whitespace-nowrap text-right text-sm text-foreground-secondary">
-          Zuletzt gedrückt:
-          <br />
-          {formatRelativeDayLabel(getBerlinDateKey(new Date(lastPress.created_at)), todayKey)},{" "}
-          {getBerlinTimeLabel(new Date(lastPress.created_at))} Uhr
-        </span>
-      ) : (
-        <span className="whitespace-nowrap text-lg text-foreground-secondary">Noch nicht gemeldet</span>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <circle cx="12" cy="12" r="5" />
+      <path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8" />
+    </svg>
+  );
+}
+
+function MoonGlyph() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" />
+    </svg>
+  );
+}
+
+// Icon im Kopf der Status-Kachel - eines pro Gesamtzustand.
+function StateGlyph({ state }: { state: "done" | "waiting" | "alarm" | "reminder" }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {state === "done" && <path d="M20 6 9 17l-5-5" />}
+      {state === "waiting" && (
+        <>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 3" />
+        </>
       )}
+      {state === "alarm" && (
+        <>
+          <path d="M10.29 3.86 1.82 18a1.5 1.5 0 0 0 1.28 2.25h17.8A1.5 1.5 0 0 0 22.18 18L13.71 3.86a1.5 1.5 0 0 0-2.42 0z" />
+          <path d="M12 9v4M12 17h.01" />
+        </>
+      )}
+      {state === "reminder" && (
+        <>
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+// Eine der beiden "weißen Zeilen" (Guten Morgen / Gute Nacht) innerhalb der
+// Status-Kachel - Icon in farbigem Quadrat, Wert rechts in derselben Farbe.
+function StatusRow({ icon, label, value, state }: { icon: React.ReactNode; label: string; value: string; state: RowState }) {
+  const colors = ROW_COLORS[state];
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl bg-card p-3">
+      <div className="flex items-center gap-3">
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${colors.bg} ${colors.text}`}>{icon}</div>
+        <span className="text-sm font-medium text-foreground">{label}</span>
+      </div>
+      <span className={`whitespace-nowrap text-sm font-semibold ${colors.text}`}>{value}</span>
     </div>
   );
 }
@@ -54,7 +98,8 @@ function StatusCard({ label, press, lastPress }: { label: string; press: Press |
 export default function Home() {
   const contact = useContact();
   const [presses, setPresses] = useState<Press[]>([]);
-  const [standDowns, setStandDowns] = useState<StandDown[]>([]);
+  const [standDowns, setStandDowns] = useState<NamedEvent[]>([]);
+  const [reminders, setReminders] = useState<NamedEvent[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -73,16 +118,22 @@ export default function Home() {
     let cancelled = false;
 
     async function load() {
-      // Presses + Entwarnungen kommen beide aus /api/verlauf (dieselbe Quelle
-      // wie der Verlauf-Tab) - daily_status/evening_stand_downs sind per RLS
-      // nicht direkt vom Client lesbar, nur serverseitig über diese Route.
+      // Presses + Erinnerungen + Entwarnungen kommen alle aus /api/verlauf
+      // (dieselbe Quelle wie der Verlauf-Tab) - daily_status/
+      // evening_stand_downs/buzzer_triggers sind per RLS nicht direkt vom
+      // Client lesbar, nur serverseitig über diese Route.
       try {
         const verlaufResponse = await fetch("/api/verlauf");
         if (verlaufResponse.ok) {
-          const { presses: freshPresses, standDowns: freshStandDowns } = await verlaufResponse.json();
+          const {
+            presses: freshPresses,
+            standDowns: freshStandDowns,
+            reminders: freshReminders,
+          } = await verlaufResponse.json();
           if (!cancelled) {
             setPresses(freshPresses ?? []);
             setStandDowns(freshStandDowns ?? []);
+            setReminders(freshReminders ?? []);
           }
         } else if (!cancelled) {
           setError("Laden fehlgeschlagen");
@@ -195,24 +246,82 @@ export default function Home() {
   }
 
   const todayKey = getBerlinDateKey(new Date());
-  const todaysPresses = presses.filter((p) => getBerlinDateKey(new Date(p.created_at)) === todayKey);
+  const isToday = (iso: string) => getBerlinDateKey(new Date(iso)) === todayKey;
+
+  const todaysPresses = presses.filter((p) => isToday(p.created_at));
   const morning = todaysPresses.find((p) => p.type === "morning") ?? null;
   const evening = todaysPresses.find((p) => p.type === "evening") ?? null;
-  // Neuester Druck je Typ, egal an welchem Tag - als Rückfall, wenn heute
-  // noch keiner da ist (siehe StatusCard).
+  // Neuester Druck je Typ, egal an welchem Tag - als Rückfall für die
+  // "Guten Morgen kommt noch"-Referenz auf den Vortag.
   const lastMorningPress = presses.find((p) => p.type === "morning") ?? null;
-  const lastEveningPress = presses.find((p) => p.type === "evening") ?? null;
+  const todayStandDown = standDowns.find((s) => isToday(s.created_at)) ?? null;
 
   const hasOpenIncident = openIncidents.length > 0;
+  const morningIncidentOpen = openIncidents.some((i) => i.type === "morning");
+  const eveningIncidentOpen = openIncidents.some((i) => i.type === "evening");
   const isBuzzerActive = buzzerActiveSince !== null;
   // "Gute Nacht" kommt erst dran, wenn "Guten Morgen" schon vorliegt - sonst
   // zeigte die Kachel direkt nach Mitternacht fälschlich schon den Abend-
   // Countdown an, obwohl der Morgen noch gar nicht passiert ist.
-  const morningPending = !morning;
+  const morningPending = !morning && !hasOpenIncident;
   // "Gute Nacht" ist erst dann wirklich überfällig, wenn auch der Cron einen
   // Alarm eröffnet hat (hasOpenIncident) - bis dahin (auch nach der eigenen
   // Deadline, wegen der 15-Minuten-Prüflücke) zeigen wir noch die Wartezeit.
   const deadlinePending = !evening && !hasOpenIncident && myDeadline !== null && now !== null && now < myDeadline;
+  // Ein echter Druck NACH der eigenen Deadline gilt als "verspätet" - rein
+  // clientseitig aus vorhandenen Daten hergeleitet, keine eigene Kennzeichnung
+  // in der Datenbank nötig.
+  const wasLatePress = evening !== null && myDeadline !== null && new Date(evening.created_at) > myDeadline;
+
+  // Gesamtzustand der Kachel, bestimmt Hintergrund-/Textfarbe.
+  const tileState: "alarm" | "reminder" | "waiting" | "done" = hasOpenIncident
+    ? "alarm"
+    : isBuzzerActive
+    ? "reminder"
+    : morningPending || deadlinePending
+    ? "waiting"
+    : "done";
+  const tileColors = {
+    alarm: { bg: "bg-warning-bg", text: "text-warning" },
+    reminder: { bg: "bg-info-bg", text: "text-info" },
+    waiting: { bg: "bg-info-bg", text: "text-info" },
+    done: { bg: "bg-success-bg", text: "text-success-text" },
+  }[tileState];
+  const tileGlyph = tileState === "done" ? "done" : tileState === "reminder" ? "reminder" : tileState === "alarm" ? "alarm" : "waiting";
+
+  // Zustand der "Guten Morgen"-Zeile.
+  const morningRow: { state: RowState; value: string } = morning
+    ? { state: "done", value: `${getBerlinTimeLabel(new Date(morning.created_at))} Uhr` }
+    : morningIncidentOpen
+    ? { state: "missed", value: "fehlt" }
+    : { state: "waiting", value: "kommt noch" };
+
+  // Zustand der "Gute Nacht"-Zeile.
+  const eveningRow: { state: RowState; value: string } = evening
+    ? { state: "done", value: `${getBerlinTimeLabel(new Date(evening.created_at))} Uhr` }
+    : todayStandDown
+    ? { state: "done", value: "Entwarnt" }
+    : eveningIncidentOpen
+    ? { state: "missed", value: "fehlt" }
+    : deadlinePending && myDeadline
+    ? { state: "waiting", value: `bis ${getBerlinTimeLabel(myDeadline)} Uhr` }
+    : { state: "neutral", value: "-" };
+
+  // "Heutiger Verlauf": alle heutigen Ereignisse gemischt, chronologisch -
+  // grün = echter Druck, blau/Info = manuelle Aktion (Erinnerung/Entwarnung).
+  const historyEntries = [
+    ...todaysPresses.map((p) => ({ time: p.created_at, label: PRESS_LABEL[p.type], dot: "done" as const })),
+    ...reminders.filter((r) => isToday(r.created_at)).map((r) => ({
+      time: r.created_at,
+      label: `Erinnert von ${r.contact_name}`,
+      dot: "info" as const,
+    })),
+    ...standDowns.filter((s) => isToday(s.created_at)).map((s) => ({
+      time: s.created_at,
+      label: `Entwarnung von ${s.contact_name}`,
+      dot: "info" as const,
+    })),
+  ].sort((a, b) => a.time.localeCompare(b.time));
 
   return (
     <main className="flex flex-1 flex-col gap-4 px-6 py-6">
@@ -229,65 +338,95 @@ export default function Home() {
         </p>
       ) : (
         <>
-          {/* Alarm-Zustand deutlich sichtbar: grün = alles gut, blau = Erinnerung läuft gerade
-              bei Opa (noch keine Eskalation, kein Alarm), orange = Alarm/wartet auf Rückmeldung */}
+          {/* Status-Kachel: Kopf (Icon + Titel + Untertext) und darunter zwei
+              Zeilen für Guten Morgen/Gute Nacht, jede mit eigener Farbe -
+              unabhängig vom Gesamtzustand der Kachel. */}
           <div
             data-onboarding="status"
-            className={`rounded-[var(--radius-tile)] p-4 text-center font-medium ${
-              hasOpenIncident
-                ? "bg-warning-bg text-warning"
-                : isBuzzerActive
-                ? "bg-info-bg text-info"
-                : "bg-success-bg text-success-text"
-            }`}
+            className={`flex flex-col gap-3 rounded-[var(--radius-tile)] p-4 ${tileColors.bg} ${tileColors.text}`}
           >
-            {hasOpenIncident ? (
-              "Opa hat sich noch nicht gemeldet"
-            ) : isBuzzerActive ? (
-              <>
-                Opa wurde um {buzzerActiveSince && getBerlinTimeLabel(buzzerActiveSince)} Uhr erinnert und wird alle
-                20 Sek. mit einem Piepton erinnert zu drücken.
-                <div className="mt-1 text-sm font-normal opacity-80">
-                  Hier nochmals antippen zum Stoppen der Erinnerung
-                </div>
-              </>
-            ) : morningPending ? (
-              <>
-                {PRESS_LABEL.morning} kommt noch
-                {lastMorningPress && (
-                  <div className="mt-1 text-xs font-normal opacity-80">
-                    {formatRelativeDayLabel(getBerlinDateKey(new Date(lastMorningPress.created_at)), todayKey)} hat er
-                    sich um {getBerlinTimeLabel(new Date(lastMorningPress.created_at))} Uhr gemeldet.
-                  </div>
+            <div className="flex items-start gap-3 text-left">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card">
+                <StateGlyph state={tileGlyph} />
+              </div>
+              <div className="flex-1 pt-1">
+                {hasOpenIncident ? (
+                  <>
+                    <p className="text-lg font-bold">Opa hat sich noch nicht gemeldet</p>
+                    <p className="mt-0.5 text-sm text-foreground">
+                      {eveningIncidentOpen && myDeadline
+                        ? `${PRESS_LABEL.evening} war bis ${getBerlinTimeLabel(myDeadline)} Uhr fällig.`
+                        : `${PRESS_LABEL.morning} fehlt seit heute Morgen.`}
+                    </p>
+                  </>
+                ) : isBuzzerActive ? (
+                  <>
+                    <p className="text-lg font-bold">
+                      Opa wurde um {buzzerActiveSince && getBerlinTimeLabel(buzzerActiveSince)} Uhr erinnert und wird
+                      alle 20 Sek. mit einem Piepton erinnert zu drücken.
+                    </p>
+                    <p className="mt-0.5 text-sm text-foreground">Hier nochmals antippen zum Stoppen der Erinnerung</p>
+                  </>
+                ) : morningPending ? (
+                  <>
+                    <p className="text-lg font-bold">{PRESS_LABEL.morning} kommt noch.</p>
+                    {lastMorningPress && (
+                      <p className="mt-0.5 text-sm text-foreground">
+                        {formatRelativeDayLabel(getBerlinDateKey(new Date(lastMorningPress.created_at)), todayKey)} hat
+                        er sich um {getBerlinTimeLabel(new Date(lastMorningPress.created_at))} Uhr gemeldet.
+                      </p>
+                    )}
+                  </>
+                ) : deadlinePending ? (
+                  <>
+                    <p className="text-lg font-bold">{PRESS_LABEL.evening} kommt noch.</p>
+                    <p className="mt-0.5 text-sm text-foreground">
+                      {PRESS_LABEL.evening} zählt bis {myDeadline && getBerlinTimeLabel(myDeadline)} Uhr. Er meldet
+                      sich bestimmt gleich.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-bold">Alles in Ordnung</p>
+                    {todayStandDown ? (
+                      <p className="mt-0.5 text-sm text-foreground">
+                        Entwarnung von {todayStandDown.contact_name} um {getBerlinTimeLabel(new Date(todayStandDown.created_at))}{" "}
+                        Uhr.
+                      </p>
+                    ) : wasLatePress ? (
+                      <p className="mt-0.5 text-sm text-foreground">
+                        Opa hat sich um {getBerlinTimeLabel(new Date(evening!.created_at))} Uhr gemeldet.
+                      </p>
+                    ) : null}
+                  </>
                 )}
-              </>
-            ) : deadlinePending ? (
-              <>
-                {PRESS_LABEL.evening} kommt noch
-                <div className="mt-1 text-xs font-normal opacity-80">
-                  {PRESS_LABEL.evening} zählt bis {myDeadline && getBerlinTimeLabel(myDeadline)} Uhr. Er meldet sich
-                  bestimmt gleich.
-                </div>
-              </>
-            ) : (
-              "Alles in Ordnung"
-            )}
+              </div>
+            </div>
+
+            <StatusRow icon={<SunGlyph />} label={PRESS_LABEL.morning} value={morningRow.value} state={morningRow.state} />
+            <StatusRow icon={<MoonGlyph />} label={PRESS_LABEL.evening} value={eveningRow.value} state={eveningRow.state} />
           </div>
 
           {/* Aufklappbarer Tages-Verlauf, zusätzlich zum separaten Verlauf-Tab -
-              zeigt jeden heutigen Druck einzeln mit Uhrzeit. */}
-          {todaysPresses.length > 0 && (
-            <CollapsibleSection title={`Heute ${todaysPresses.length}x gedrückt – Verlauf`} dataOnboarding="today-history">
-              {[...todaysPresses]
-                .sort((a, b) => a.created_at.localeCompare(b.created_at))
-                .map((press, index) => (
-                  <div key={index} className="flex items-center justify-between gap-4 p-4">
-                    <span className="text-sm font-medium">{PRESS_LABEL[press.type]}</span>
-                    <span className="text-sm text-foreground-secondary">
-                      {getBerlinTimeLabel(new Date(press.created_at))} Uhr
-                    </span>
-                  </div>
-                ))}
+              zeigt jedes heutige Ereignis einzeln mit Uhrzeit. Bei bereits
+              erledigtem Tag standardmäßig offen. */}
+          {historyEntries.length > 0 && (
+            <CollapsibleSection
+              title={`Heutiger Verlauf · ${historyEntries.length} ${historyEntries.length === 1 ? "Eintrag" : "Einträge"}`}
+              defaultOpen={tileState === "done"}
+              dataOnboarding="today-history"
+            >
+              {historyEntries.map((entry, index) => (
+                <div key={index} className="flex items-center gap-3 p-4">
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${entry.dot === "done" ? "bg-success-text" : "bg-info"}`}
+                  />
+                  <span className="w-12 shrink-0 text-sm text-foreground-secondary">
+                    {getBerlinTimeLabel(new Date(entry.time))}
+                  </span>
+                  <span className="text-sm font-medium">{entry.label}</span>
+                </div>
+              ))}
             </CollapsibleSection>
           )}
 
@@ -347,7 +486,7 @@ export default function Home() {
                     <button
                       onClick={handleStandDown}
                       disabled={standDownStatus === "sending"}
-                      className="min-h-[56px] rounded-[var(--radius-card)] border border-warning bg-card px-4 py-2 text-sm font-medium text-warning"
+                      className="min-h-[56px] rounded-[var(--radius-card)] px-4 py-2 text-sm font-semibold text-accent underline"
                     >
                       {standDownStatus === "sending" ? "Wird gesendet…" : "Alles in Ordnung – nur nicht gedrückt"}
                     </button>
@@ -357,22 +496,13 @@ export default function Home() {
             </>
           ) : (
             <>
-              <SevenDayOverview presses={presses} standDowns={standDowns} />
-
-              <div data-onboarding="press-cards" className="flex flex-col gap-4">
-                <StatusCard label={PRESS_LABEL.morning} press={morning} lastPress={lastMorningPress} />
-                <StatusCard label={PRESS_LABEL.evening} press={evening} lastPress={lastEveningPress} />
-              </div>
-
               {!evening && (
                 <button
                   data-onboarding="remind"
                   onClick={handleRemindOpa}
                   disabled={reminderStatus === "sending"}
                   className={`min-h-[56px] p-4 text-center text-lg font-medium ${
-                    isBuzzerActive
-                      ? "bg-warning text-white"
-                      : "border border-border bg-card"
+                    isBuzzerActive ? "bg-warning text-white" : "border border-border bg-card"
                   }`}
                   style={{ borderRadius: "var(--radius-card)" }}
                 >
@@ -383,6 +513,8 @@ export default function Home() {
                     : "Opa erinnern"}
                 </button>
               )}
+
+              <SevenDayOverview presses={presses} standDowns={standDowns} />
             </>
           )}
 

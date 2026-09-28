@@ -21,6 +21,10 @@
   --warning-bg: #fbe7da;
   --info: #3e5c76;
   --info-bg: #e4ebf1;
+  /* "Ausstehend/neutral": z.B. Mond-Symbol für einen Tag, der noch gar nicht
+     dran war - weder erledigt (grün) noch verpasst (orange), einfach noch
+     nicht fällig. */
+  --neutral-bg: #e3ddd0;
   /* Kein eigener Fehlerton im neuen Farbschema definiert - Formularfehler
      nutzen bewusst denselben Warnton wie der Alarm-Zustand. */
   --error: #b4541a;
@@ -48,6 +52,7 @@
   --color-warning-bg: var(--warning-bg);
   --color-info: var(--info);
   --color-info-bg: var(--info-bg);
+  --color-neutral-bg: var(--neutral-bg);
   --color-error: var(--error);
   --color-status-done: var(--status-done);
   --color-status-pending: var(--status-pending);
@@ -66,6 +71,7 @@
   --success-bg: #1f3a2c;
   --warning-bg: #3d2a1c;
   --info-bg: #22303e;
+  --neutral-bg: #33453b;
 }
 
 body {
