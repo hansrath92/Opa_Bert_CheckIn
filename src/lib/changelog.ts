@@ -7,6 +7,11 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.12.4",
+    date: "2026-09-27",
+    changes: ["Pi: Entprellzeit testweise weiter auf 30 ms gesenkt (zusammen mit der 50ms-Nachprüfung 80 ms gesamt) für sehr schnelles Antippen"],
+  },
+  {
     version: "1.12.3",
     date: "2026-09-27",
     changes: ["Pi: Entprellzeit 250 -> 150 ms, damit auch ein sehr schnelles Antippen zuverlässig ankommt"],

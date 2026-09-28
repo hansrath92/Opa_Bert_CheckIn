@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.12.4 – 2026-09-27
+- Pi: Entprellzeit testweise weiter auf 30 ms gesenkt (zusammen mit der 50ms-Nachprüfung 80 ms gesamt) für sehr schnelles Antippen
+
 ## 1.12.3 – 2026-09-27
 - Pi: Entprellzeit 250 -> 150 ms, damit auch ein sehr schnelles Antippen zuverlässig ankommt
 

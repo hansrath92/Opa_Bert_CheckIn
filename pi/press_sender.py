@@ -16,19 +16,29 @@ BUZZER_PIN = 27  # Physischer Pin 13, GND auf Pin 14 (passiver Piezo)
 
 RETRY_DELAYS_SECONDS = [2, 5, 10, 20]  # bei kurzen WLAN-Aussetzern erneut versuchen
 
-# Entprellung in zwei Stufen:
+# Entprellung in zwei Stufen, die NACHEINANDER ablaufen (erst
+# BUTTON_DEBOUNCE_MS, danach zusätzlich CONFIRM_CHECK_SECONDS, siehe unten) -
+# ein echter Fingerdruck muss also mindestens BEIDE Zeiten zusammen andauern,
+# sonst verwirft die Nachprüfung ihn wieder. Für "reagiert auf kurzes
+# Antippen" zählt darum die SUMME, nicht nur einer der beiden Werte:
+# - 100 ms Entprellung + 50 ms Nachprüfung = 150 ms zusammen ließen
+#   Störsignale durch (Fehlauslösungen ohne Druck, siehe 25./26.9.).
+# - Behoben mit 250 + 50 = 300 ms zusammen.
+# - Jetzt testweise auf 30 + 50 = 80 ms gesenkt (deutlich unter den 150 ms,
+#   die schon mal Probleme gemacht haben) - bewusstes Experiment für sehr
+#   kurzes Antippen. Treten wieder Fehlauslösungen auf: zuerst zurück auf
+#   150 + 50 = 200 ms, in kleinen Schritten weiter Richtung 300 ms, notfalls
+#   zusätzlich einen externen Pull-up-Widerstand einbauen (siehe Notizen).
+#
 # - BUTTON_DEBOUNCE_MS geht an die GPIO-Bibliothek. Achtung: rpi-lgpio meldet
 #   einen Druck erst, wenn das Signal so lange STABIL war - der Wert verzögert
-#   also jeden Druck um genau diese Zeit UND verschluckt kürzere, schnelle
-#   Antipp-Drücke komplett. 800 ms waren als Verzögerung hörbar, 100 ms haben
-#   Störsignale durchgelassen (Fehlauslösungen ohne Druck, siehe 25.9./26.9.).
-#   150 ms ist ein Mittelweg zwischen "reagiert auch auf kurzes Antippen" und
-#   "filtert die Störungen, die bei 100 ms durchkamen" - falls doch wieder
-#   Fehlauslösungen auftreten, hier zuerst wieder in Richtung 250 erhöhen.
+#   also jeden Druck um genau diese Zeit UND verschluckt kürzere Antipp-Drücke
+#   komplett, bevor unser eigener Code überhaupt etwas davon mitbekommt.
 # - PRESS_LOCKOUT_SECONDS ist unsere eigene Sperre im Skript: Weitere Drücke
 #   innerhalb dieser Zeit werden ignoriert (kein Ton, nichts gesendet), damit
-#   kein Doppel-Eintrag in der App entsteht.
-BUTTON_DEBOUNCE_MS = 150
+#   kein Doppel-Eintrag in der App entsteht. Hat mit der Entprellung oben
+#   nichts zu tun.
+BUTTON_DEBOUNCE_MS = 30
 PRESS_LOCKOUT_SECONDS = 2.0
 last_press_at = 0.0  # Zeitpunkt (time.monotonic) des letzten gezählten Drucks
 
@@ -39,6 +49,7 @@ last_press_at = 0.0  # Zeitpunkt (time.monotonic) des letzten gezählten Drucks
 # - CONFIRM_CHECK_SECONDS: Nach einem erkannten Druck kurz warten und den Pin
 #   erneut lesen. Nur wenn er dann immer noch LOW ist (Knopf wirklich noch
 #   gedrückt), zählt der Druck. Eine Störspitze ist bis dahin längst vorbei.
+#   Läuft bei JEDEM Druck, nicht nur beim Start - zählt für die Summe oben mit.
 STARTUP_IGNORE_SECONDS = 5.0
 CONFIRM_CHECK_SECONDS = 0.05
 program_started_at = time.monotonic()  # wird in main() nochmal exakt gesetzt
