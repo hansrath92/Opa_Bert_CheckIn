@@ -261,8 +261,11 @@ export default function Home() {
   const isBuzzerActive = buzzerActiveSince !== null;
   // "Gute Nacht" kommt erst dran, wenn "Guten Morgen" schon vorliegt - sonst
   // zeigte die Kachel direkt nach Mitternacht fälschlich schon den Abend-
-  // Countdown an, obwohl der Morgen noch gar nicht passiert ist.
-  const morningPending = !morning && !hasOpenIncident;
+  // Countdown an, obwohl der Morgen noch gar nicht passiert ist. Ebenso: hat
+  // Opa "Gute Nacht" schon gedrückt, ignorieren wir einen fehlenden Morgen -
+  // dann ist der Tag ja erkennbar in Ordnung, ein nachträgliches "Guten
+  // Morgen kommt noch" wäre nur verwirrend.
+  const morningPending = !morning && !evening && !hasOpenIncident;
   // "Gute Nacht" ist erst dann wirklich überfällig, wenn auch der Cron einen
   // Alarm eröffnet hat (hasOpenIncident) - bis dahin (auch nach der eigenen
   // Deadline, wegen der 15-Minuten-Prüflücke) zeigen wir noch die Wartezeit.
@@ -288,11 +291,15 @@ export default function Home() {
   }[tileState];
   const tileGlyph = tileState === "done" ? "done" : tileState === "reminder" ? "reminder" : tileState === "alarm" ? "alarm" : "waiting";
 
-  // Zustand der "Guten Morgen"-Zeile.
+  // Zustand der "Guten Morgen"-Zeile. Fehlt der Morgen, aber "Gute Nacht" ist
+  // schon da, zeigen wir bewusst nichts Alarmierendes mehr an ("–", neutral) -
+  // der Tag ist dann ja erkennbar in Ordnung.
   const morningRow: { state: RowState; value: string } = morning
     ? { state: "done", value: `${getBerlinTimeLabel(new Date(morning.created_at))} Uhr` }
     : morningIncidentOpen
     ? { state: "missed", value: "fehlt" }
+    : evening
+    ? { state: "neutral", value: "–" }
     : { state: "waiting", value: "kommt noch" };
 
   // Zustand der "Gute Nacht"-Zeile.
