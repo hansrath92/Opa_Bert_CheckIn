@@ -518,10 +518,13 @@ function ErinnerungszeitenHeuteBereich() {
   );
 }
 
-type PublicContact = { name: string };
+type PublicContact = { id: string; name: string };
 
 function FamilieBereich() {
+  const contact = useContact();
+  const logout = useLogout();
   const [contacts, setContacts] = useState<PublicContact[] | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/contacts/list")
@@ -530,6 +533,36 @@ function FamilieBereich() {
       .catch(() => setContacts([]));
   }, []);
 
+  async function handleDelete(target: PublicContact) {
+    const isSelf = target.id === contact.id;
+    const confirmed = window.confirm(
+      isSelf
+        ? `Willst du dich selbst (${target.name}) wirklich aus der Familie entfernen? Du wirst danach abgemeldet.`
+        : `${target.name} wirklich aus der Familie entfernen? Das kann nicht rückgängig gemacht werden.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(target.id);
+    try {
+      const response = await fetch("/api/contacts/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact_id: target.id }),
+      });
+      if (!response.ok) {
+        window.alert("Löschen hat nicht geklappt. Versuch es noch einmal.");
+        return;
+      }
+      if (isSelf) {
+        logout();
+        return;
+      }
+      setContacts((prev) => (prev ?? []).filter((c) => c.id !== target.id));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <CollapsibleSection title="Familie" summary={contacts ? `${contacts.length}` : undefined}>
       {contacts === null ? (
@@ -537,10 +570,17 @@ function FamilieBereich() {
       ) : contacts.length === 0 ? (
         <div className="p-4 text-sm text-foreground-secondary">Noch niemand angemeldet.</div>
       ) : (
-        contacts.map((c, index) => (
+        contacts.map((c) => (
           // Nur Namen - wann wer benachrichtigt wird, steht unter "Erinnerungszeiten heute".
-          <div key={c.name + index} className="p-4">
+          <div key={c.id} className="flex items-center justify-between gap-4 p-4">
             <span className="text-sm font-medium">{c.name}</span>
+            <button
+              onClick={() => handleDelete(c)}
+              disabled={deletingId === c.id}
+              className="text-sm text-error underline disabled:opacity-50"
+            >
+              {deletingId === c.id ? "Löscht…" : "Entfernen"}
+            </button>
           </div>
         ))
       )}

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.0 – 2026-09-28
+- Neu: Kontakte können unter Einstellungen → Familie jetzt entfernt werden (mit Sicherheitsabfrage)
+
 ## 2.0.2 – 2026-09-28
 - Fix: Hatte Opa morgens nicht gedrückt (Alarm lief), löste ein späterer Gute-Nacht-Druck den Alarm nicht mehr auf - die Kachel blieb rot auf "Achtung", obwohl Opa sich abends klar gemeldet hat. Jeder echte Druck löst jetzt alle heute noch offenen Alarme auf, egal welcher Art
 

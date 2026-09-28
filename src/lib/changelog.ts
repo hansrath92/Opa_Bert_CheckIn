@@ -7,6 +7,11 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.1.0",
+    date: "2026-09-28",
+    changes: ["Neu: Kontakte können unter Einstellungen → Familie jetzt entfernt werden (mit Sicherheitsabfrage)"],
+  },
+  {
     version: "2.0.2",
     date: "2026-09-28",
     changes: [
