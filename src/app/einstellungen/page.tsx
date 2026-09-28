@@ -201,7 +201,9 @@ function MeineBenachrichtigungenBereich() {
 
               {settings.notify_on_missed_checkin && (
                 <div className="flex flex-col gap-3 p-4">
-                  <span className="text-sm font-medium">{PRESS_LABEL.evening}: benachrichtigen ab</span>
+                  <span className="text-sm font-medium">
+                    Wie schnell willst du benachrichtigt werden, wenn Opa den Buzzer nicht gedrückt hat?
+                  </span>
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="radio"

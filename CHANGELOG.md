@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.0 – 2026-09-27
+- Zwei Personen dürfen jetzt dieselbe PIN haben
+- Beitreten-Formular fragt nicht mehr nach der Erinnerungszeit (Standard: 2h) - das stellt jede Person danach selbst unter "Meine Benachrichtigungen" ein
+- Neue Frage dort: "Wie schnell willst du benachrichtigt werden, wenn Opa den Buzzer nicht gedrückt hat?"
+
 ## 1.12.6 – 2026-09-27
 - Fix: "Opa erinnern" wirkte nach einem bereits erfolgten Abend-Druck oder einer Entwarnung nicht mehr (kein Piepton, Anzeige sprang von selbst zurück) - der manuelle Auslöser funktioniert jetzt wie versprochen jederzeit
 

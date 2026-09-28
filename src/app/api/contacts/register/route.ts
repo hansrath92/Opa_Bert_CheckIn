@@ -24,13 +24,11 @@ export async function POST(request: NextRequest) {
     .select("id, name, tolerance_hours")
     .single();
 
+  // PINs sind bewusst NICHT eindeutig (siehe Migration 0014) - sie dienen nur
+  // als Verwechslungs-Absicherung nach der Namensauswahl (confirm-pin prüft
+  // gegen die PIN genau des schon ausgewählten Kontakts), nie zum
+  // Nachschlagen einer Person. Zwei Personen dürfen also dieselbe PIN haben.
   if (error) {
-    if (error.code === "23505") {
-      return NextResponse.json(
-        { error: "Diese PIN ist schon vergeben, bitte eine andere wählen" },
-        { status: 409 }
-      );
-    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

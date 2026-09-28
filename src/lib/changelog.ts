@@ -7,6 +7,15 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.13.0",
+    date: "2026-09-27",
+    changes: [
+      "Zwei Personen dürfen jetzt dieselbe PIN haben",
+      "Beitreten-Formular fragt nicht mehr nach der Erinnerungszeit (Standard: 2h) - das stellt jede Person danach selbst unter Meine Benachrichtigungen ein",
+      "Neue Frage dort: Wie schnell willst du benachrichtigt werden, wenn Opa den Buzzer nicht gedrückt hat?",
+    ],
+  },
+  {
     version: "1.12.6",
     date: "2026-09-27",
     changes: [

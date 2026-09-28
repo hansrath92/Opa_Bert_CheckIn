@@ -63,7 +63,6 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
   const [selected, setSelected] = useState<PublicContact | null>(null);
   const [pin, setPin] = useState("");
   const [name, setName] = useState("");
-  const [toleranceInput, setToleranceInput] = useState("2");
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [onboardingActive, setOnboardingActive] = useState(false);
@@ -170,7 +169,10 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
       const response = await fetch("/api/contacts/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, pin, tolerance_hours: Number(toleranceInput) || 2 }),
+        // Keine Erinnerungszeit-Frage mehr beim Beitreten (per Default 2h,
+        // siehe /api/contacts/register) - stellt jede Person danach für sich
+        // selbst unter "Meine Benachrichtigungen" ein.
+        body: JSON.stringify({ name, pin }),
       });
       const data = await safeJson(response);
       if (!response.ok || !data.contact) {
@@ -280,17 +282,6 @@ export default function IdentityGate({ children }: { children: React.ReactNode }
             onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
             className={inputClass}
           />
-          <label className="flex flex-col gap-1 text-sm text-foreground-secondary">
-            Nach wie vielen Stunden nach Sonnenuntergang willst du benachrichtigt werden?
-            <input
-              type="number"
-              min={0.5}
-              step={0.5}
-              value={toleranceInput}
-              onChange={(e) => setToleranceInput(e.target.value)}
-              className={inputClass}
-            />
-          </label>
           {formError && <p className="text-sm text-error">{formError}</p>}
           <button onClick={join} disabled={isSubmitting} className={`${buttonClass} py-3`}>
             {isSubmitting ? "Wird angelegt…" : "Beitreten"}
