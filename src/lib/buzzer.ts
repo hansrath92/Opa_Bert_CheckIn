@@ -11,6 +11,7 @@ export type BuzzerState = {
   eveningPressTime: string | null;
   autoTriggeredAt: string | null;
   eveningStoodDownAt: string | null;
+  buzzerSnoozedAt: string | null;
 };
 
 // Gemeinsame Logik für /api/buzzer-status (vom Pi gepollt) und
@@ -21,7 +22,7 @@ export async function computeBuzzerState(now: Date): Promise<BuzzerState> {
 
   const { data: status, error } = await supabaseAdmin
     .from("daily_status")
-    .select("evening_press_time, buzzer_manually_triggered, auto_triggered_at, evening_stood_down_at")
+    .select("evening_press_time, buzzer_manually_triggered, auto_triggered_at, evening_stood_down_at, buzzer_snoozed_at")
     .eq("date_key", todayKey)
     .maybeSingle();
 
@@ -30,6 +31,7 @@ export async function computeBuzzerState(now: Date): Promise<BuzzerState> {
   const eveningPressTime = status?.evening_press_time ?? null;
   const buzzerManuallyTriggered = status?.buzzer_manually_triggered ?? false;
   const eveningStoodDownAt = status?.evening_stood_down_at ?? null;
+  const buzzerSnoozedAt = status?.buzzer_snoozed_at ?? null;
   let autoTriggeredAt: string | null = status?.auto_triggered_at ?? null;
 
   // Abend-Druck ODER Entwarnung ("Alles in Ordnung - nur nicht gedrückt") ->
@@ -44,6 +46,7 @@ export async function computeBuzzerState(now: Date): Promise<BuzzerState> {
       eveningPressTime,
       autoTriggeredAt,
       eveningStoodDownAt,
+      buzzerSnoozedAt,
     };
   }
 
@@ -62,12 +65,21 @@ export async function computeBuzzerState(now: Date): Promise<BuzzerState> {
     if (upsertError) throw new Error(upsertError.message);
   }
 
+  // Bug-Fix: früher überstimmte die automatische Zeitbedingung jedes manuelle
+  // Stoppen, sobald sie einmal eingetreten war ("shouldBuzz: timeConditionMet
+  // || buzzerManuallyTriggered" - true bleibt true). Jetzt gilt: einmal
+  // bewusst gestoppt (buzzerSnoozedAt gesetzt), bleibt die automatische
+  // Bedingung für den Rest des Tages stumm, bis jemand den Buzzer über
+  // /api/buzzer-trigger wieder aktiv einschaltet (das löscht buzzerSnoozedAt).
+  const automaticStillActive = timeConditionMet && buzzerSnoozedAt === null;
+
   return {
-    shouldBuzz: timeConditionMet || buzzerManuallyTriggered,
+    shouldBuzz: automaticStillActive || buzzerManuallyTriggered,
     timeConditionMet,
     buzzerManuallyTriggered,
     eveningPressTime,
     autoTriggeredAt,
     eveningStoodDownAt,
+    buzzerSnoozedAt,
   };
 }

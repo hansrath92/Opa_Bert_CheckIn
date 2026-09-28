@@ -7,6 +7,15 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.12.1",
+    date: "2026-09-27",
+    changes: [
+      "Heutiger Verlauf auf Heute wieder entfernt (doppelt mit der 7-Tage-Übersicht)",
+      "Fix: Erinnerung aktiv konnte manchmal nicht gestoppt werden, weil die automatische Zeitbedingung ein manuelles Stoppen sofort wieder überstimmte",
+      "Neu: Wurde die Erinnerung heute schon mal gestoppt, zeigt die Kachel Erinnerung wurde um HH:MM Uhr zurückgesetzt",
+    ],
+  },
+  {
     version: "1.12.0",
     date: "2026-09-27",
     changes: [

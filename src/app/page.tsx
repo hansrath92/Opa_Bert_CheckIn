@@ -6,7 +6,6 @@ import { formatRelativeDayLabel } from "@/lib/days";
 import { OPA_PHONE_NUMBER } from "@/lib/opa";
 import { PRESS_LABEL } from "@/lib/naming";
 import { useContact } from "@/components/IdentityGate";
-import CollapsibleSection from "@/components/CollapsibleSection";
 import SevenDayOverview from "@/components/SevenDayOverview";
 
 type Press = {
@@ -99,13 +98,16 @@ export default function Home() {
   const contact = useContact();
   const [presses, setPresses] = useState<Press[]>([]);
   const [standDowns, setStandDowns] = useState<NamedEvent[]>([]);
-  const [reminders, setReminders] = useState<NamedEvent[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [openIncidents, setOpenIncidents] = useState<Incident[]>([]);
   const [reminderStatus, setReminderStatus] = useState<"idle" | "sending">("idle");
   const [buzzerActiveSince, setBuzzerActiveSince] = useState<Date | null>(null);
+  // Wann die Erinnerung zuletzt bewusst gestoppt wurde (falls heute schon mal
+  // geschehen) - macht auf "Heute" transparent, dass sie nicht einfach
+  // kommentarlos verschwunden, sondern gezielt beendet wurde.
+  const [snoozedAt, setSnoozedAt] = useState<Date | null>(null);
   const [metOpaStatus, setMetOpaStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [standDownStatus, setStandDownStatus] = useState<"idle" | "sending">("idle");
   const [myDeadline, setMyDeadline] = useState<Date | null>(null);
@@ -118,22 +120,16 @@ export default function Home() {
     let cancelled = false;
 
     async function load() {
-      // Presses + Erinnerungen + Entwarnungen kommen alle aus /api/verlauf
-      // (dieselbe Quelle wie der Verlauf-Tab) - daily_status/
-      // evening_stand_downs/buzzer_triggers sind per RLS nicht direkt vom
+      // Presses + Entwarnungen kommen aus /api/verlauf (dieselbe Quelle wie
+      // der Verlauf-Tab) - evening_stand_downs ist per RLS nicht direkt vom
       // Client lesbar, nur serverseitig über diese Route.
       try {
         const verlaufResponse = await fetch("/api/verlauf");
         if (verlaufResponse.ok) {
-          const {
-            presses: freshPresses,
-            standDowns: freshStandDowns,
-            reminders: freshReminders,
-          } = await verlaufResponse.json();
+          const { presses: freshPresses, standDowns: freshStandDowns } = await verlaufResponse.json();
           if (!cancelled) {
             setPresses(freshPresses ?? []);
             setStandDowns(freshStandDowns ?? []);
-            setReminders(freshReminders ?? []);
           }
         } else if (!cancelled) {
           setError("Laden fehlgeschlagen");
@@ -160,8 +156,9 @@ export default function Home() {
       try {
         const buzzerResponse = await fetch("/api/buzzer-live-status");
         if (buzzerResponse.ok) {
-          const { shouldBuzz, activeSince } = await buzzerResponse.json();
+          const { shouldBuzz, activeSince, snoozedAt: snoozed } = await buzzerResponse.json();
           setBuzzerActiveSince(shouldBuzz && activeSince ? new Date(activeSince) : null);
+          setSnoozedAt(snoozed ? new Date(snoozed) : null);
         }
       } catch {
         // Live-Status ist informativ, ein Fehler hier blockiert die Hauptanzeige nicht
@@ -237,7 +234,9 @@ export default function Home() {
       });
       if (response.ok) {
         // Optimistisch sofort anzeigen, der nächste 30-Sekunden-Poll bestätigt/korrigiert.
-        setBuzzerActiveSince(nextActive ? new Date() : null);
+        const now = new Date();
+        setBuzzerActiveSince(nextActive ? now : null);
+        setSnoozedAt(nextActive ? null : now);
       }
       setReminderStatus("idle");
     } catch {
@@ -306,22 +305,6 @@ export default function Home() {
     : deadlinePending && myDeadline
     ? { state: "waiting", value: `bis ${getBerlinTimeLabel(myDeadline)} Uhr` }
     : { state: "neutral", value: "-" };
-
-  // "Heutiger Verlauf": alle heutigen Ereignisse gemischt, chronologisch -
-  // grün = echter Druck, blau/Info = manuelle Aktion (Erinnerung/Entwarnung).
-  const historyEntries = [
-    ...todaysPresses.map((p) => ({ time: p.created_at, label: PRESS_LABEL[p.type], dot: "done" as const })),
-    ...reminders.filter((r) => isToday(r.created_at)).map((r) => ({
-      time: r.created_at,
-      label: `Erinnert von ${r.contact_name}`,
-      dot: "info" as const,
-    })),
-    ...standDowns.filter((s) => isToday(s.created_at)).map((s) => ({
-      time: s.created_at,
-      label: `Entwarnung von ${s.contact_name}`,
-      dot: "info" as const,
-    })),
-  ].sort((a, b) => a.time.localeCompare(b.time));
 
   return (
     <main className="flex flex-1 flex-col gap-4 px-6 py-6">
@@ -405,30 +388,17 @@ export default function Home() {
 
             <StatusRow icon={<SunGlyph />} label={PRESS_LABEL.morning} value={morningRow.value} state={morningRow.state} />
             <StatusRow icon={<MoonGlyph />} label={PRESS_LABEL.evening} value={eveningRow.value} state={eveningRow.state} />
-          </div>
 
-          {/* Aufklappbarer Tages-Verlauf, zusätzlich zum separaten Verlauf-Tab -
-              zeigt jedes heutige Ereignis einzeln mit Uhrzeit. Bei bereits
-              erledigtem Tag standardmäßig offen. */}
-          {historyEntries.length > 0 && (
-            <CollapsibleSection
-              title={`Heutiger Verlauf · ${historyEntries.length} ${historyEntries.length === 1 ? "Eintrag" : "Einträge"}`}
-              defaultOpen={tileState === "done"}
-              dataOnboarding="today-history"
-            >
-              {historyEntries.map((entry, index) => (
-                <div key={index} className="flex items-center gap-3 p-4">
-                  <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${entry.dot === "done" ? "bg-success-text" : "bg-info"}`}
-                  />
-                  <span className="w-12 shrink-0 text-sm text-foreground-secondary">
-                    {getBerlinTimeLabel(new Date(entry.time))}
-                  </span>
-                  <span className="text-sm font-medium">{entry.label}</span>
-                </div>
-              ))}
-            </CollapsibleSection>
-          )}
+            {/* Transparent machen, DASS und WANN eine Erinnerung bewusst gestoppt
+                wurde - sonst wirkt es, als wäre "Erinnerung aktiv" kommentarlos
+                verschwunden. Bei Entwarnung steht der Grund schon oben, hier nicht
+                nochmal doppelt erwähnen. */}
+            {snoozedAt && !isBuzzerActive && !todayStandDown && (
+              <p className="text-center text-xs opacity-80">
+                Erinnerung wurde um {getBerlinTimeLabel(snoozedAt)} Uhr zurückgesetzt.
+              </p>
+            )}
+          </div>
 
           {hasOpenIncident ? (
             <>

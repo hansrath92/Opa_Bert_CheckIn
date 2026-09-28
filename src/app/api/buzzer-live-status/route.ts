@@ -17,7 +17,10 @@ export async function GET() {
     const state = await computeBuzzerState(now);
 
     if (!state.shouldBuzz) {
-      return NextResponse.json({ shouldBuzz: false, activeSince: null });
+      // Falls die Erinnerung heute schon mal lief und bewusst gestoppt wurde,
+      // zeigt das Dashboard das transparent an ("Erinnerung wurde um HH:MM
+      // Uhr zurückgesetzt"), statt sie einfach kommentarlos verschwinden zu lassen.
+      return NextResponse.json({ shouldBuzz: false, activeSince: null, snoozedAt: state.buzzerSnoozedAt });
     }
 
     const candidates: number[] = [];
@@ -48,7 +51,7 @@ export async function GET() {
 
     const activeSince = candidates.length > 0 ? new Date(Math.min(...candidates)).toISOString() : null;
 
-    return NextResponse.json({ shouldBuzz: true, activeSince });
+    return NextResponse.json({ shouldBuzz: true, activeSince, snoozedAt: null });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }

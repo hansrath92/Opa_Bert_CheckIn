@@ -47,13 +47,6 @@ const STEPS: Step[] = [
   },
   {
     path: "/",
-    target: "today-history",
-    title: "Verlauf des heutigen Tages",
-    description:
-      "Hat Opa heute schon (mehrfach) gedrückt, kannst du hier jede einzelne Uhrzeit aufklappen.",
-  },
-  {
-    path: "/",
     target: "remind",
     title: "Opa erinnern",
     description:

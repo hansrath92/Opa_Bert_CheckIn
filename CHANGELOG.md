@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.1 – 2026-09-27
+- "Heutiger Verlauf" auf "Heute" wieder entfernt (doppelt mit der 7-Tage-Übersicht)
+- Fix: "Erinnerung aktiv" konnte manchmal nicht gestoppt werden, weil die automatische Zeitbedingung ein manuelles Stoppen sofort wieder überstimmte - der Button hält jetzt sein Versprechen ein
+- Neu: Wurde die Erinnerung heute schon mal gestoppt, zeigt die Kachel jetzt "Erinnerung wurde um HH:MM Uhr zurückgesetzt"
+
 ## 1.12.0 – 2026-09-27
 - Status-Kachel auf "Heute" komplett neu aufgebaut: Icon, Titel und Untertext oben, darunter Guten-Morgen/Gute-Nacht als eigene farbige Zeilen direkt in der Kachel
 - Neue "Wartend"-Farbe für "kommt noch"-Zustände, getrennt von Grün (erledigt) und Orange (Alarm)

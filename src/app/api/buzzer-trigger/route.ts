@@ -12,14 +12,23 @@ export async function POST(request: NextRequest) {
   }
 
   const shouldActivate = active !== false;
-  const todayKey = getBerlinDateKey(new Date());
+  const now = new Date();
+  const todayKey = getBerlinDateKey(now);
 
-  const { error } = await supabaseAdmin
-    .from("daily_status")
-    .upsert(
-      { date_key: todayKey, buzzer_manually_triggered: shouldActivate },
-      { onConflict: "date_key" }
-    );
+  // Ausschalten setzt buzzer_snoozed_at - das übersteuert die automatische
+  // Zeitbedingung in computeBuzzerState() für den Rest des Tages (sonst kam
+  // die Erinnerung beim nächsten Poll sofort zurück, weil "1h nach
+  // Sonnenuntergang" für sich genommen weiterhin erfüllt war). Erneutes
+  // Einschalten löscht die Stummschaltung wieder, damit der Buzzer sich
+  // wirklich neu "einschalten" lässt.
+  const { error } = await supabaseAdmin.from("daily_status").upsert(
+    {
+      date_key: todayKey,
+      buzzer_manually_triggered: shouldActivate,
+      buzzer_snoozed_at: shouldActivate ? null : now.toISOString(),
+    },
+    { onConflict: "date_key" }
+  );
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
