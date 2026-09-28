@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.12.3 – 2026-09-27
+- Pi: Entprellzeit 250 -> 150 ms, damit auch ein sehr schnelles Antippen zuverlässig ankommt
+
 ## 1.12.2 – 2026-09-27
 - Vercel Speed Insights aktiviert, um die Ladegeschwindigkeit der App im Blick zu behalten
 
