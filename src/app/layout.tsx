@@ -20,13 +20,13 @@ export const metadata: Metadata = {
   // Sichtbarer Name für Nutzer (Browser-Tab, iOS-Homescreen) - der
   // Projektname im Repo/package.json und die Vercel-URL bleiben bewusst
   // "Opa-Checkin"/"opa-bert-check-in", das hier ist nur die Außenbenennung.
-  title: "Lebenszeichen",
+  title: "Servus Bert",
   description: "Check-in App für Opa",
   manifest: "/manifest.json",
   // Eigener iOS-Homescreen-Name, unabhängig vom manifest.json short_name -
   // ohne dieses Feld würde Safari sonst ggf. auf den <title> zurückfallen.
   appleWebApp: {
-    title: "Lebenszeichen",
+    title: "Servus Bert",
   },
 };
 

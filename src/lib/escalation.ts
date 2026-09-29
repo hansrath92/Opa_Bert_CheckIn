@@ -101,7 +101,7 @@ async function sendPushToContact(contactId: string, body: string): Promise<void>
 
   if (error) throw new Error(error.message);
 
-  const payload = JSON.stringify({ title: "Lebenszeichen", body });
+  const payload = JSON.stringify({ title: "Servus Bert", body });
 
   const results = await Promise.allSettled(
     (subscriptions ?? []).map((sub) =>

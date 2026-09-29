@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getBerlinDateKey, getBerlinTimeLabel } from "@/lib/press";
+import { getBerlinDateKey, getBerlinHourMinute, getBerlinTimeAsUTC, getBerlinTimeLabel } from "@/lib/press";
 import { formatRelativeDayLabel } from "@/lib/days";
 import { OPA_PHONE_NUMBER } from "@/lib/opa";
 import { PRESS_LABEL } from "@/lib/naming";
@@ -285,10 +285,25 @@ export default function Home() {
   // dann ist der Tag ja erkennbar in Ordnung, ein nachträgliches "Guten
   // Morgen kommt noch" wäre nur verwirrend.
   const morningPending = !morning && !evening && !hasOpenIncident;
+  // Opa drückt tendenziell jeden Tag um eine ähnliche Uhrzeit. Bevor diese
+  // (aus dem letzten ECHTEN Abend-Druck, nicht aus einer Entwarnung)
+  // erreicht ist, gibt es keinen Grund, schon "kommt noch" anzuzeigen - das
+  // wirkte sonst ab kurz nach dem Guten-Morgen-Druck den ganzen Tag über
+  // unnötig unsicher, obwohl noch gar nichts auffällig ist. Ohne bisherigen
+  // Abend-Druck (z.B. ganz am Anfang) gibt es keine Referenz - dann wie
+  // bisher sofort nach der Deadline suchen.
+  const lastEveningPress = presses.find((p) => p.type === "evening") ?? null;
+  let typicalEveningTime: Date | null = null;
+  if (lastEveningPress && now) {
+    const { hour, minute } = getBerlinHourMinute(new Date(lastEveningPress.created_at));
+    typicalEveningTime = getBerlinTimeAsUTC(now, hour, minute);
+  }
+  const pastTypicalEveningTime = typicalEveningTime === null || (now !== null && now >= typicalEveningTime);
   // "Gute Nacht" ist erst dann wirklich überfällig, wenn auch der Cron einen
   // Alarm eröffnet hat (hasOpenIncident) - bis dahin (auch nach der eigenen
   // Deadline, wegen der 15-Minuten-Prüflücke) zeigen wir noch die Wartezeit.
-  const deadlinePending = !evening && !hasOpenIncident && myDeadline !== null && now !== null && now < myDeadline;
+  const deadlinePending =
+    !evening && !hasOpenIncident && myDeadline !== null && now !== null && now < myDeadline && pastTypicalEveningTime;
   // Ein echter Druck NACH der eigenen Deadline gilt als "verspätet" - rein
   // clientseitig aus vorhandenen Daten hergeleitet, keine eigene Kennzeichnung
   // in der Datenbank nötig.

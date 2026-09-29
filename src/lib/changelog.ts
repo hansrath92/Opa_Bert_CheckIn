@@ -7,6 +7,14 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.2.0",
+    date: "2026-09-29",
+    changes: [
+      "App heißt jetzt Servus Bert statt Lebenszeichen",
+      "Fix: Gute Nacht kommt noch erschien bisher den ganzen Tag ab dem Guten-Morgen-Druck - zeigt jetzt Alles in Ordnung an, bis ungefähr die Uhrzeit von gestern Abend erreicht ist",
+    ],
+  },
+  {
     version: "2.1.0",
     date: "2026-09-28",
     changes: ["Neu: Kontakte können unter Einstellungen → Familie jetzt entfernt werden (mit Sicherheitsabfrage)"],

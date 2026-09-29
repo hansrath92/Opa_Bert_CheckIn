@@ -46,6 +46,19 @@ export function getBerlinTimeAsUTC(
   return new Date(Date.UTC(year, month - 1, day, hour - offsetHours, minute));
 }
 
+// Stunde+Minute eines Zeitpunkts in Berliner Zeit, z.B. um daraus für einen
+// ANDEREN Tag (etwa "heute") denselben Zeitpunkt via getBerlinTimeAsUTC zu bauen.
+export function getBerlinHourMinute(date: Date): { hour: number; minute: number } {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BERLIN_TIME_ZONE,
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value);
+  return { hour: get("hour"), minute: get("minute") };
+}
+
 export function getBerlinTimeLabel(
   date: Date,
   options?: { seconds?: boolean }

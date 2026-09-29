@@ -20,7 +20,7 @@ type Step = {
 const STEPS: Step[] = [
   {
     path: "/",
-    title: "Willkommen bei Lebenszeichen",
+    title: "Willkommen bei Servus Bert",
     description:
       "Opa hat zuhause einen roten Knopf. Er drückt ihn morgens beim Aufstehen und abends beim Zuschließen. Diese App zeigt der Familie, ob er sich gemeldet hat - ganz ohne täglich anrufen zu müssen.",
   },

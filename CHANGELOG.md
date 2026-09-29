@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0 – 2026-09-29
+- App heißt jetzt "Servus Bert" statt "Lebenszeichen" (Titel, Homescreen-Icon, Push-Nachrichten, Willkommens-Text)
+- Fix: "Gute Nacht kommt noch" erschien bisher direkt nach dem Guten-Morgen-Druck den ganzen Tag über und wirkte dadurch unnötig unsicher. Zeigt jetzt "Alles in Ordnung" an, bis ungefähr die Uhrzeit von gestern Abend erreicht ist (Opa drückt meist zur ähnlichen Zeit) - erst dann erscheint die Wartezeit
+
 ## 2.1.0 – 2026-09-28
 - Neu: Kontakte können unter Einstellungen → Familie jetzt entfernt werden (mit Sicherheitsabfrage)
 
