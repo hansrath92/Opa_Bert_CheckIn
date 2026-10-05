@@ -7,6 +7,13 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.4.0",
+    date: "2026-10-05",
+    changes: [
+      "Neu: Unter Einstellungen → Familie kann jetzt auch für jede andere Person eine Testbenachrichtigung ausgelöst werden, nicht nur für dich selbst",
+    ],
+  },
+  {
     version: "2.3.0",
     date: "2026-10-05",
     changes: [

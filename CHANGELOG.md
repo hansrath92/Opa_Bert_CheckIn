@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.0 – 2026-10-05
+- Neu: Unter Einstellungen → Familie gibt es den "Testen"-Knopf jetzt auch für jede andere angemeldete Person, nicht nur für dich selbst - praktisch, um bei jemand anderem zu prüfen, ob Push-Nachrichten bei ihm/ihr ankommen
+
 ## 2.3.0 – 2026-10-05
 - Neu: Unter Einstellungen → Meine Benachrichtigungen kann jede Person jetzt per Knopfdruck ("Testen") eine Testbenachrichtigung an ihr eigenes Gerät schicken, um zu prüfen, ob Push-Nachrichten wirklich ankommen - ohne dafür einen echten Knopfdruck/Alarm auslösen zu müssen
 

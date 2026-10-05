@@ -554,6 +554,9 @@ function FamilieBereich() {
   const logout = useLogout();
   const [contacts, setContacts] = useState<PublicContact[] | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Pro Kontakt eigener Status, da mehrere Testbenachrichtigungen aus dieser
+  // Liste unabhängig voneinander laufen können (nicht nur die eigene).
+  const [testStatusById, setTestStatusById] = useState<Record<string, "sending" | "sent" | "error">>({});
 
   useEffect(() => {
     fetch("/api/contacts/list")
@@ -592,6 +595,32 @@ function FamilieBereich() {
     }
   }
 
+  // Testbenachrichtigung an EINEN beliebigen Kontakt aus der Familie (nicht
+  // nur an sich selbst) - praktisch, um z.B. bei Opa oder einer anderen
+  // Person zu prüfen, ob Push-Nachrichten auf deren Gerät überhaupt ankommen,
+  // ohne dafür einen echten Alarm abwarten zu müssen. Nutzt dieselbe Route
+  // wie der "Testen"-Button unter "Meine Benachrichtigungen" oben.
+  async function handleTest(target: PublicContact) {
+    setTestStatusById((prev) => ({ ...prev, [target.id]: "sending" }));
+    try {
+      const response = await fetch("/api/push/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact_id: target.id }),
+      });
+      if (response.ok) {
+        setTestStatusById((prev) => ({ ...prev, [target.id]: "sent" }));
+      } else {
+        const data = await response.json().catch(() => ({}));
+        window.alert(data.error ?? "Testbenachrichtigung hat nicht geklappt. Versuch es noch einmal.");
+        setTestStatusById((prev) => ({ ...prev, [target.id]: "error" }));
+      }
+    } catch {
+      window.alert("Testbenachrichtigung hat nicht geklappt. Versuch es noch einmal.");
+      setTestStatusById((prev) => ({ ...prev, [target.id]: "error" }));
+    }
+  }
+
   return (
     <CollapsibleSection title="Familie" summary={contacts ? `${contacts.length}` : undefined}>
       {contacts === null ? (
@@ -603,13 +632,26 @@ function FamilieBereich() {
           // Nur Namen - wann wer benachrichtigt wird, steht unter "Erinnerungszeiten heute".
           <div key={c.id} className="flex items-center justify-between gap-4 p-4">
             <span className="text-sm font-medium">{c.name}</span>
-            <button
-              onClick={() => handleDelete(c)}
-              disabled={deletingId === c.id}
-              className="text-sm text-error underline disabled:opacity-50"
-            >
-              {deletingId === c.id ? "Löscht…" : "Entfernen"}
-            </button>
+            <div className="flex shrink-0 items-center gap-3">
+              <button
+                onClick={() => handleTest(c)}
+                disabled={testStatusById[c.id] === "sending"}
+                className="text-sm font-medium text-accent underline disabled:opacity-50"
+              >
+                {testStatusById[c.id] === "sending"
+                  ? "Sendet…"
+                  : testStatusById[c.id] === "sent"
+                  ? "Gesendet ✓"
+                  : "Testen"}
+              </button>
+              <button
+                onClick={() => handleDelete(c)}
+                disabled={deletingId === c.id}
+                className="text-sm text-error underline disabled:opacity-50"
+              >
+                {deletingId === c.id ? "Löscht…" : "Entfernen"}
+              </button>
+            </div>
           </div>
         ))
       )}
@@ -656,7 +698,9 @@ function SoFunktioniertsBereich() {
         </ul>
         <p className="mt-2 text-sm text-foreground-secondary">
           Mit dem Knopf „Testen" direkt neben „Push auf diesem Gerät" kannst du dir jederzeit eine
-          Testbenachrichtigung schicken, um zu prüfen, ob sie auf deinem Handy ankommt.
+          Testbenachrichtigung schicken, um zu prüfen, ob sie auf deinem Handy ankommt. Unter „Familie" gibt es
+          denselben Knopf auch für jede andere angemeldete Person – praktisch, wenn jemand nicht sicher ist, ob
+          bei ihm Nachrichten ankommen.
         </p>
       </div>
 
