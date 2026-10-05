@@ -77,6 +77,7 @@ function MeineBenachrichtigungenBereich() {
   const contact = useContact();
   const updateContact = useUpdateContact();
   const [pushStatus, setPushStatus] = useState<"idle" | "active" | "subscribing" | "error">("idle");
+  const [testPushStatus, setTestPushStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [settings, setSettings] = useState<MySettings | null>(null);
   const [toleranceInput, setToleranceInput] = useState(String(contact.tolerance_hours));
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
@@ -113,6 +114,23 @@ function MeineBenachrichtigungenBereich() {
       setPushStatus("active");
     } catch {
       setPushStatus("error");
+    }
+  }
+
+  // Schickt eine harmlose Testnachricht an die EIGENE contact_id, um zu
+  // prüfen, ob auf diesem Gerät wirklich eine Push-Benachrichtigung ankommt -
+  // ohne dafür einen echten Knopfdruck/Alarm auslösen zu müssen.
+  async function handleTestPush() {
+    setTestPushStatus("sending");
+    try {
+      const response = await fetch("/api/push/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact_id: contact.id }),
+      });
+      setTestPushStatus(response.ok ? "sent" : "error");
+    } catch {
+      setTestPushStatus("error");
     }
   }
 
@@ -171,7 +189,18 @@ function MeineBenachrichtigungenBereich() {
           <div className="text-xs text-foreground-secondary">Nötig, damit Nachrichten hier ankommen.</div>
         </div>
         {pushStatus === "active" ? (
-          <span className="rounded-full bg-success-bg px-3 py-1 text-xs font-medium text-success-text">Aktiv</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="rounded-full bg-success-bg px-3 py-1 text-xs font-medium text-success-text">Aktiv</span>
+            <button onClick={handleTestPush} disabled={testPushStatus === "sending"} className={buttonClass}>
+              {testPushStatus === "sending"
+                ? "Wird gesendet…"
+                : testPushStatus === "sent"
+                ? "Gesendet ✓"
+                : testPushStatus === "error"
+                ? "Fehlgeschlagen"
+                : "Testen"}
+            </button>
+          </div>
         ) : (
           <button onClick={handleSubscribe} disabled={pushStatus === "subscribing"} className={`${buttonClass} shrink-0`}>
             {pushStatus === "subscribing" ? "Wird aktiviert…" : pushStatus === "error" ? "Erneut versuchen" : "Aktivieren"}
@@ -619,12 +648,16 @@ function SoFunktioniertsBereich() {
 
       <div className="flex flex-col gap-1 p-4">
         <p className="text-sm font-medium">Was du einstellen kannst</p>
-        <p className="text-sm text-foreground-secondary">Unter „Meine Benachrichtigungen“ bestimmst du für dich selbst:</p>
+        <p className="text-sm text-foreground-secondary">Unter „Meine Benachrichtigungen" bestimmst du für dich selbst:</p>
         <ul className="mt-1 flex flex-col gap-0.5 text-sm text-foreground-secondary">
           <li>• Ob du überhaupt benachrichtigt werden willst</li>
           <li>• Ob deine Erinnerungszeit automatisch (an den Sonnenuntergang gekoppelt) oder fest sein soll</li>
           <li>• Ob du zusätzlich bei JEDEM Knopfdruck eine Nachricht willst, nicht nur im Alarmfall</li>
         </ul>
+        <p className="mt-2 text-sm text-foreground-secondary">
+          Mit dem Knopf „Testen" direkt neben „Push auf diesem Gerät" kannst du dir jederzeit eine
+          Testbenachrichtigung schicken, um zu prüfen, ob sie auf deinem Handy ankommt.
+        </p>
       </div>
 
       <div className="flex flex-col gap-1 p-4">

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.3.0 – 2026-10-05
+- Neu: Unter Einstellungen → Meine Benachrichtigungen kann jede Person jetzt per Knopfdruck ("Testen") eine Testbenachrichtigung an ihr eigenes Gerät schicken, um zu prüfen, ob Push-Nachrichten wirklich ankommen - ohne dafür einen echten Knopfdruck/Alarm auslösen zu müssen
+
 ## 2.2.0 – 2026-09-29
 - App heißt jetzt "Servus Bert" statt "Lebenszeichen" (Titel, Homescreen-Icon, Push-Nachrichten, Willkommens-Text)
 - Fix: "Gute Nacht kommt noch" erschien bisher direkt nach dem Guten-Morgen-Druck den ganzen Tag über und wirkte dadurch unnötig unsicher. Zeigt jetzt "Alles in Ordnung" an, bis ungefähr die Uhrzeit von gestern Abend erreicht ist (Opa drückt meist zur ähnlichen Zeit) - erst dann erscheint die Wartezeit

@@ -91,7 +91,10 @@ export async function notifyStandDown(otherContactIds: string[], byName: string)
 
 // Schickt eine Push-Nachricht an ALLE Geräte, mit denen sich dieser eine Kontakt
 // registriert hat (jemand kann z.B. Handy + Tablet abonniert haben).
-async function sendPushToContact(contactId: string, body: string): Promise<void> {
+// Gibt die Anzahl der Geräte zurück, an die versucht wurde zu senden - so
+// kann z.B. der Test-Button in den Einstellungen erkennen, ob überhaupt ein
+// Gerät registriert war (0 = nichts verschickt, kein "falscher Erfolg").
+export async function sendPushToContact(contactId: string, body: string): Promise<number> {
   ensureVapidConfigured();
 
   const { data: subscriptions, error } = await supabaseAdmin
@@ -127,6 +130,8 @@ async function sendPushToContact(contactId: string, body: string): Promise<void>
   if (expiredIds.length > 0) {
     await supabaseAdmin.from("push_subscriptions").delete().in("id", expiredIds);
   }
+
+  return subscriptions?.length ?? 0;
 }
 
 // Kontaktiert den nächsten Kontakt in der Prioritäts-Reihenfolge (nach Toleranz-Zeit aufsteigend,
