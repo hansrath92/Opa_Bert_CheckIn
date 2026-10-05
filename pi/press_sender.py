@@ -70,7 +70,7 @@ BEEP_GAP_SECONDS = 0.15
 # Bestätigungston direkt beim Knopfdruck: aufsteigendes "Ding-Dong"
 # (tief -> hoch). Klingt bewusst anders als der Erinnerungs-Doppelpiep
 # (zweimal gleich hoch), damit Opa beides auseinanderhalten kann.
-CONFIRM_TONES = [(1500, 0.12), (2500, 0.30)]  # (Frequenz in Hz, Dauer in Sekunden)
+CONFIRM_TONES = [(1000, 0.12), (1500, 0.30)]  # (Frequenz in Hz, Dauer in Sekunden)
 CONFIRM_GAP_SECONDS = 0.05
 
 # Der Piezo wird von zwei Threads benutzt (Erinnerung + Bestätigung). Das
