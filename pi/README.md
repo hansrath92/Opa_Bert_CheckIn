@@ -165,6 +165,15 @@ systemctl show -p RuntimeWatchdogUSec
 ```
 Ausgabe `RuntimeWatchdogUSec=15s` = aktiv.
 
+**Alles auf einmal prüfen** (Hardware-Watchdog, Logs, Internet-Watchdog):
+```bash
+systemctl show -p RuntimeWatchdogUSec          # soll 15s zeigen
+ls -d /var/log/journal                         # Ordner muss existieren
+systemctl list-timers opa-internet-watchdog.timer   # Timer mit Termin bei NEXT
+systemctl status opa-internet-watchdog.timer --no-pager   # "active (waiting)" = gut
+journalctl -t opa-internet-watchdog -n 10 --no-pager     # leer = Internet war da
+```
+
 Weitere Hinweise: `vcgencmd get_throttled` sollte `throttled=0x0` zeigen
 (Unterspannung = schwaches Netzteil/Kabel). Zeigt der Pi immer wieder Hänger,
 Netzteil (Original 5 V / 3 A beim Pi 4) und SD-Karte tauschen.
