@@ -1,0 +1,11 @@
+[Unit]
+Description=Internet-Check des Opa-Checkin-Pi alle 5 Minuten
+
+[Timer]
+# Erster Check 10 Minuten nach dem Booten (WLAN hat dann sicher Zeit gehabt),
+# danach 5 Minuten nach dem Ende des jeweils letzten Checks.
+OnBootSec=10min
+OnUnitInactiveSec=5min
+
+[Install]
+WantedBy=timers.target

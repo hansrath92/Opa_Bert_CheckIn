@@ -133,6 +133,75 @@ sudo systemctl status opa-checkin.service
 
 ---
 
+## 3b. Selbstheilung bei Pi-Hänger (Watchdog + dauerhafte Logs)
+
+Problem: Der Pi war wochenlang offline und kam erst nach Aus-/Einstecken des
+Netzteils zurück. Zwei Maßnahmen dagegen (einmalig einrichten):
+
+**1. Hardware-Watchdog:** Hängt sich das ganze System auf, startet der Pi sich
+nach ca. 15 Sekunden selbst neu.
+```bash
+sudo mkdir -p /etc/systemd/system.conf.d
+sudo cp ~/opa-checkin/pi/watchdog.conf /etc/systemd/system.conf.d/watchdog.conf
+sudo systemctl daemon-reexec
+```
+
+**2. Logs dauerhaft speichern:** Standardmäßig liegt das Journal nur im RAM und
+ist nach einem Neustart weg - dann sieht man die Ausfallursache nie.
+```bash
+sudo mkdir -p /var/log/journal
+sudo systemctl restart systemd-journald
+```
+
+**Nach einem Ausfall die Ursache ansehen** (Log des vorherigen Starts):
+```bash
+journalctl --list-boots | tail -5
+journalctl -b -1 -n 60 --no-pager
+```
+
+**Prüfen, ob es aktiv ist:**
+```bash
+systemctl show -p RuntimeWatchdogUSec
+```
+Ausgabe `RuntimeWatchdogUSec=15s` = aktiv.
+
+Weitere Hinweise: `vcgencmd get_throttled` sollte `throttled=0x0` zeigen
+(Unterspannung = schwaches Netzteil/Kabel). Zeigt der Pi immer wieder Hänger,
+Netzteil (Original 5 V / 3 A beim Pi 4) und SD-Karte tauschen.
+
+---
+
+## 3c. Internet-Watchdog (Selbstreparatur bei fehlendem Internet)
+
+Der Hardware-Watchdog (3b) greift nur, wenn der ganze Pi hängt. Läuft er, hat
+aber kein Internet mehr, übernimmt dieser Check. Alle 5 Minuten wird
+`opa-bert-check-in.vercel.app` angefragt. Schlägt das fehl:
+- nach **2 Fehlversuchen (~10 Min):** WLAN/NetworkManager wird neu gestartet
+- nach **6 Fehlversuchen (~30 Min):** der Pi startet komplett neu
+
+Ein erfolgreicher Check setzt den Zähler auf 0 zurück.
+
+**Einmalig einrichten:**
+```bash
+sudo cp ~/opa-checkin/pi/opa-internet-watchdog.service /etc/systemd/system/
+sudo cp ~/opa-checkin/pi/opa-internet-watchdog.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now opa-internet-watchdog.timer
+```
+
+**Prüfen, ob er läuft / was er getan hat:**
+```bash
+systemctl list-timers opa-internet-watchdog.timer
+journalctl -t opa-internet-watchdog -n 30 --no-pager
+```
+
+**Testen** (Check einmal sofort auslösen, bei Internet passiert nichts):
+```bash
+sudo systemctl start opa-internet-watchdog.service
+```
+
+---
+
 ## 4. Logs (Protokolle) ansehen
 
 **Letzte 30 Zeilen anzeigen:**

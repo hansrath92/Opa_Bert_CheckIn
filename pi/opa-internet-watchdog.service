@@ -1,0 +1,7 @@
+[Unit]
+Description=Opa-Checkin Internet-Check (WLAN neu starten bzw. Pi neu starten, wenn offline)
+
+[Service]
+Type=oneshot
+# Per bash gestartet, damit die Datei kein Ausfuehrungsrecht braucht.
+ExecStart=/bin/bash /home/haensi/opa-checkin/pi/internet_watchdog.sh
