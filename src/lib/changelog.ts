@@ -7,6 +7,13 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.4.1",
+    date: "2026-10-26",
+    changes: [
+      "Fix: Die Zeitumstellung (Sommer-/Winterzeit) wird jetzt korrekt übernommen - am Tag der Umstellung waren Uhrzeiten wie die 11-Uhr-Morgenfrist bis 3 Uhr nachts eine Stunde verschoben",
+    ],
+  },
+  {
     version: "2.4.0",
     date: "2026-10-05",
     changes: [

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.1 – 2026-10-26
+- Fix: Sommer-/Winterzeit wird jetzt korrekt übernommen - am Tag der Zeitumstellung waren Fristen (z.B. 11 Uhr morgens) bis 3 Uhr nachts um eine Stunde verschoben
+
 ## 2.4.0 – 2026-10-05
 - Neu: Unter Einstellungen → Familie gibt es den "Testen"-Knopf jetzt auch für jede andere angemeldete Person, nicht nur für dich selbst - praktisch, um bei jemand anderem zu prüfen, ob Push-Nachrichten bei ihm/ihr ankommen
 
