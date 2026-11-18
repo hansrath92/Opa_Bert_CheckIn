@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.2 – 2026-11-18
+- Pi fragt den Buzzer-Status nur noch alle 30 statt alle 5 Sekunden ab (spart Vercel-Rechenzeit); der Buzzer geht nach einem Druck dadurch bis zu 30 Sekunden später aus - Pi-Dienst muss neu gestartet werden
+
 ## 2.4.1 – 2026-10-26
 - Fix: Sommer-/Winterzeit wird jetzt korrekt übernommen - am Tag der Zeitumstellung waren Fristen (z.B. 11 Uhr morgens) bis 3 Uhr nachts um eine Stunde verschoben
 

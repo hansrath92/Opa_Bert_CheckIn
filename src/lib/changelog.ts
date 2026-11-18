@@ -7,6 +7,13 @@ export type ChangelogEntry = {
 // Neueste Version zuerst. Kurze Stichpunkte - Details gehören in die Commit-Messages.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.4.2",
+    date: "2026-11-18",
+    changes: [
+      "Der Buzzer bei Opa prüft nur noch alle 30 statt alle 5 Sekunden, ob er piepen soll - das schont das Kontingent der App. Nach einem Knopfdruck kann es dadurch bis zu 30 Sekunden dauern, bis das Piepen aufhört",
+    ],
+  },
+  {
     version: "2.4.1",
     date: "2026-10-26",
     changes: [

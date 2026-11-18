@@ -60,7 +60,10 @@ HEARTBEAT_URL = API_URL.replace("/api/press", "/api/heartbeat")
 HEARTBEAT_INTERVAL_SECONDS = 300  # alle 5 Minuten, unabhängig von echten Knopfdrücken
 
 BUZZER_STATUS_URL = API_URL.replace("/api/press", "/api/buzzer-status")
-BUZZER_POLL_INTERVAL_SECONDS = 5  # wie schnell der Buzzer auf ein "aus" reagiert
+# Wie oft der Pi nachfragt, ob der Buzzer an/aus sein soll. 30 s statt vorher 5 s,
+# um die Vercel-Rechenzeit (Fluid Active CPU) zu schonen - der Buzzer reagiert
+# dadurch bis zu 30 s verzögert auf ein "aus".
+BUZZER_POLL_INTERVAL_SECONDS = 30
 BUZZER_REPEAT_SECONDS = 20  # Wiederholung des Doppel-Pieps, siehe Anforderungsdokument Abschnitt 6
 BUZZER_FREQUENCY_HZ = 2000
 BUZZER_DUTY_CYCLE_PERCENT = 30  # entspricht "Tastverhältnis/Lautstärke 0,3"
